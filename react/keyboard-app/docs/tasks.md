@@ -2,10 +2,10 @@
 
 ## Phase 1: 基盤構築
 
-- [ ] プロジェクト構造の整備（ディレクトリ作成）
-- [ ] 型定義ファイルの作成 (`types/keyboard.ts`)
-- [ ] `useKeyboard` フックの実装
-- [ ] `KeyboardBase` コンポーネントの実装
+- [x] プロジェクト構造の整備（ディレクトリ作成）
+- [x] 型定義ファイルの作成 (`types/keyboard.ts`)
+- [x] `useKeyboard` フックの実装
+- [x] `KeyboardBase` コンポーネントの実装
 
 ## Phase 2: キーボードコンポーネント実装
 

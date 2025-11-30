@@ -32,6 +32,7 @@ interface KeyboardBaseProps {
   keys: string[][];           // キー配列（行ごと）
   onKeyPress: (key: string) => void;
   onClose: () => void;
+  onBackspace: () => void;    // バックスペース処理
   mode: 'realtime' | 'confirm';
   previewValue?: string;      // 確定モード用プレビュー値
   onConfirm?: () => void;     // 確定モード用
@@ -59,15 +60,21 @@ interface KeyboardInputProps {
 ```typescript
 interface UseKeyboardReturn {
   isOpen: boolean;
-  inputValue: string;        // リアルタイムモード用
-  previewValue: string;      // 確定モード用
+  inputValue: string;        // 確定済みの入力値
+  previewValue: string;      // 確定モード用（現在の入力値 + 編集中の値）
   open: () => void;
   close: () => void;
   handleKeyPress: (key: string) => void;
   handleConfirm: () => void;
   handleBackspace: () => void;
+  setInputValue: (value: string) => void;
 }
 ```
+
+**確定モードの動作:**
+- `open()` 時に `previewValue` へ現在の `inputValue` をコピー
+- キー入力で `previewValue` を編集
+- `handleConfirm()` で `previewValue` を `inputValue` として確定
 
 ## キー配列定義
 
