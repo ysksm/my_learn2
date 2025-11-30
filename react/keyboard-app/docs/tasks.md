@@ -9,10 +9,10 @@
 
 ## Phase 2: キーボードコンポーネント実装
 
-- [ ] 数値キーボード (`NumericKeyboard`) の実装
-- [ ] ひらがなキーボード (`HiraganaKeyboard`) の実装
-- [ ] カタカナキーボード (`KatakanaKeyboard`) の実装
-- [ ] アルファベットキーボード (`AlphabetKeyboard`) の実装
+- [x] 数値キーボード (`NumericKeyboard`) の実装
+- [x] ひらがなキーボード (`HiraganaKeyboard`) の実装
+- [x] カタカナキーボード (`KatakanaKeyboard`) の実装
+- [x] アルファベットキーボード (`AlphabetKeyboard`) の実装
 
 ## Phase 3: 入力コンポーネント実装
 
