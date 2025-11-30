@@ -1,0 +1,101 @@
+# 設計書
+
+## アーキテクチャ
+
+```
+src/
+├── components/
+│   ├── keyboards/
+│   │   ├── NumericKeyboard.tsx    # 数値キーボード
+│   │   ├── HiraganaKeyboard.tsx   # ひらがなキーボード
+│   │   ├── KatakanaKeyboard.tsx   # カタカナキーボード
+│   │   ├── AlphabetKeyboard.tsx   # アルファベットキーボード
+│   │   └── KeyboardBase.tsx       # 共通キーボードベース
+│   ├── inputs/
+│   │   └── KeyboardInput.tsx      # キーボード連携入力コンポーネント
+│   └── App.tsx
+├── hooks/
+│   └── useKeyboard.ts             # キーボード制御フック
+├── types/
+│   └── keyboard.ts                # 型定義
+└── main.tsx
+```
+
+## コンポーネント設計
+
+### KeyboardBase
+
+全キーボードの基底コンポーネント。共通レイアウトと機能を提供。
+
+```typescript
+interface KeyboardBaseProps {
+  keys: string[][];           // キー配列（行ごと）
+  onKeyPress: (key: string) => void;
+  onClose: () => void;
+  mode: 'realtime' | 'confirm';
+  previewValue?: string;      // 確定モード用プレビュー値
+  onConfirm?: () => void;     // 確定モード用
+}
+```
+
+### KeyboardInput
+
+入力フィールドとキーボードを連携するラッパーコンポーネント。
+
+```typescript
+interface KeyboardInputProps {
+  type: 'numeric' | 'hiragana' | 'katakana' | 'alphabet';
+  mode: 'realtime' | 'confirm';
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}
+```
+
+### useKeyboard フック
+
+キーボードの表示/非表示、入力状態を管理。
+
+```typescript
+interface UseKeyboardReturn {
+  isOpen: boolean;
+  inputValue: string;        // リアルタイムモード用
+  previewValue: string;      // 確定モード用
+  open: () => void;
+  close: () => void;
+  handleKeyPress: (key: string) => void;
+  handleConfirm: () => void;
+  handleBackspace: () => void;
+}
+```
+
+## キー配列定義
+
+### 数値キーボード
+
+```
+[ 1 ] [ 2 ] [ 3 ]
+[ 4 ] [ 5 ] [ 6 ]
+[ 7 ] [ 8 ] [ 9 ]
+[ ⌫ ] [ 0 ] [ ✓ ]
+```
+
+### ひらがな/カタカナキーボード
+
+五十音配列（あかさたなはまやらわ行）
+
+### アルファベットキーボード
+
+QWERTY配列
+
+## 状態管理
+
+- 各入力フィールドの値はローカルステートで管理
+- キーボードの開閉状態は `useKeyboard` フックで管理
+- 確定モードのプレビュー値は一時的なステートとして保持
+
+## スタイリング
+
+- CSS Modulesまたはインラインスタイルを使用
+- キーボードは画面下部に固定表示
+- レスポンシブ対応（モバイル想定）
