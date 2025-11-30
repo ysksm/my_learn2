@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import type { UseKeyboardReturn, UseKeyboardOptions } from '../types/keyboard';
 
 export function useKeyboard(options: UseKeyboardOptions): UseKeyboardReturn {
@@ -8,13 +8,22 @@ export function useKeyboard(options: UseKeyboardOptions): UseKeyboardReturn {
   const [inputValue, setInputValue] = useState(initialValue);
   const [previewValue, setPreviewValue] = useState('');
 
+  // onChangeをrefで保持して最新の参照を維持
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
   const open = useCallback(() => {
     setIsOpen(true);
     if (mode === 'confirm') {
       // 確定モードでは既存値をプレビューに設定
-      setPreviewValue(inputValue);
+      setInputValue(current => {
+        setPreviewValue(current);
+        return current;
+      });
     }
-  }, [mode, inputValue]);
+  }, [mode]);
 
   const close = useCallback(() => {
     setIsOpen(false);
@@ -23,33 +32,38 @@ export function useKeyboard(options: UseKeyboardOptions): UseKeyboardReturn {
 
   const handleKeyPress = useCallback((key: string) => {
     if (mode === 'realtime') {
-      const newValue = inputValue + key;
-      setInputValue(newValue);
-      onChange?.(newValue);
+      setInputValue(current => {
+        const newValue = current + key;
+        onChangeRef.current?.(newValue);
+        return newValue;
+      });
     } else {
       setPreviewValue(prev => prev + key);
     }
-  }, [mode, inputValue, onChange]);
+  }, [mode]);
 
   const handleBackspace = useCallback(() => {
     if (mode === 'realtime') {
-      const newValue = inputValue.slice(0, -1);
-      setInputValue(newValue);
-      onChange?.(newValue);
+      setInputValue(current => {
+        const newValue = current.slice(0, -1);
+        onChangeRef.current?.(newValue);
+        return newValue;
+      });
     } else {
-      // 確定モードでもプレビュー値を削除可能
       setPreviewValue(prev => prev.slice(0, -1));
     }
-  }, [mode, inputValue, onChange]);
+  }, [mode]);
 
   const handleConfirm = useCallback(() => {
     if (mode === 'confirm') {
-      // プレビュー値をそのまま確定値として設定
-      setInputValue(previewValue);
-      onChange?.(previewValue);
+      setPreviewValue(currentPreview => {
+        setInputValue(currentPreview);
+        onChangeRef.current?.(currentPreview);
+        return currentPreview;
+      });
       close();
     }
-  }, [mode, previewValue, onChange, close]);
+  }, [mode, close]);
 
   const updateInputValue = useCallback((value: string) => {
     setInputValue(value);

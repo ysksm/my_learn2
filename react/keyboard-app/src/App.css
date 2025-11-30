@@ -53,3 +53,19 @@
 .input-group input::placeholder {
   color: #aaa;
 }
+
+.values-display {
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.values-display p {
+  margin: 8px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.demo-section .keyboard-input {
+  margin-bottom: 16px;
+}

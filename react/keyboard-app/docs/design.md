@@ -50,7 +50,20 @@ interface KeyboardInputProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  label?: string;
 }
+```
+
+**使用例:**
+```tsx
+<KeyboardInput
+  type="numeric"
+  mode="realtime"
+  value={value}
+  onChange={setValue}
+  label="数値入力"
+  placeholder="タップして入力"
+/>
 ```
 
 ### useKeyboard フック
@@ -75,6 +88,10 @@ interface UseKeyboardReturn {
 - `open()` 時に `previewValue` へ現在の `inputValue` をコピー
 - キー入力で `previewValue` を編集
 - `handleConfirm()` で `previewValue` を `inputValue` として確定
+
+**実装上の注意:**
+- 連続入力に対応するため、状態更新は関数型更新 (`setState(current => ...)`) を使用
+- `onChange` コールバックは `useRef` で保持し、最新の参照を維持
 
 ## キー配列定義
 
