@@ -10,21 +10,42 @@ export function KeyboardBase({
   previewValue,
   onConfirm,
 }: KeyboardBaseProps) {
+  const getKeyLabel = (key: string): string => {
+    if (key === '⌫') return 'バックスペース';
+    if (key === '✓') return mode === 'confirm' ? '確定' : '閉じる';
+    if (key === '　') return '空白';
+    return key;
+  };
+
   return (
-    <div className="keyboard-overlay" onClick={onClose}>
-      <div className="keyboard-container" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="keyboard-overlay"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="キーボード"
+    >
+      <div
+        className="keyboard-container"
+        onClick={(e) => e.stopPropagation()}
+        role="group"
+        aria-label="入力キー"
+      >
         {mode === 'confirm' && (
-          <div className="keyboard-preview">
+          <div className="keyboard-preview" aria-live="polite" aria-label="入力プレビュー">
             <span className="preview-value">{previewValue || '\u00A0'}</span>
           </div>
         )}
-        <div className="keyboard-keys">
+        <div className="keyboard-keys" role="group">
           {keys.map((row, rowIndex) => (
-            <div key={rowIndex} className="keyboard-row">
+            <div key={rowIndex} className="keyboard-row" role="group">
               {row.map((key, keyIndex) => (
                 <button
                   key={keyIndex}
+                  type="button"
                   className={`keyboard-key ${key === '⌫' ? 'key-backspace' : ''} ${key === '✓' ? 'key-confirm' : ''}`}
+                  aria-label={getKeyLabel(key)}
+                  disabled={key === '　'}
                   onClick={() => {
                     if (key === '⌫') {
                       onBackspace();
@@ -34,7 +55,7 @@ export function KeyboardBase({
                       } else {
                         onClose();
                       }
-                    } else {
+                    } else if (key !== '　') {
                       onKeyPress(key);
                     }
                   }}
@@ -46,7 +67,12 @@ export function KeyboardBase({
           ))}
         </div>
         <div className="keyboard-actions">
-          <button className="keyboard-close" onClick={onClose}>
+          <button
+            type="button"
+            className="keyboard-close"
+            onClick={onClose}
+            aria-label="キーボードを閉じる"
+          >
             閉じる
           </button>
         </div>
