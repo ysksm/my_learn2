@@ -1,0 +1,38 @@
+{
+  "name": "opentelemetry-sample",
+  "version": "1.0.0",
+  "description": "OpenTelemetry学習用サンプルアプリケーション - Traces, Metrics, Logsの3つのシグナルを理解する",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "demo:traces": "ts-node src/traces/demo.ts",
+    "demo:metrics": "ts-node src/metrics/demo.ts",
+    "demo:logs": "ts-node src/logs/demo.ts",
+    "demo:all": "ts-node src/index.ts"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "1.7.0",
+    "@opentelemetry/api-logs": "0.45.1",
+    "@opentelemetry/sdk-node": "0.45.1",
+    "@opentelemetry/sdk-trace-node": "1.18.1",
+    "@opentelemetry/sdk-trace-base": "1.18.1",
+    "@opentelemetry/sdk-metrics": "1.18.1",
+    "@opentelemetry/sdk-logs": "0.45.1",
+    "@opentelemetry/exporter-trace-otlp-http": "0.45.1",
+    "@opentelemetry/exporter-metrics-otlp-http": "0.45.1",
+    "@opentelemetry/exporter-logs-otlp-http": "0.45.1",
+    "@opentelemetry/resources": "1.18.1",
+    "@opentelemetry/semantic-conventions": "1.18.1",
+    "@opentelemetry/instrumentation-http": "0.45.1",
+    "@opentelemetry/instrumentation-express": "0.34.1",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.2"
+  }
+}
