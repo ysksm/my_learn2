@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenTelemetryの仕組み：完全ガイド</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts for Japanese -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #f3f4f6; /* slate-100 */
+        }
+        
+        /* Custom Chart Container Styles as per requirements */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Specific height controls for responsiveness */
+        .chart-height-sm {
+            height: 300px;
+            max-height: 350px;
+        }
+        
+        .chart-height-md {
+            height: 350px;
+            max-height: 400px;
+        }
+
+        @media (min-width: 768px) {
+            .chart-container {
+                max-width: 100%; /* Controlled by grid columns */
+            }
+        }
+        
+        /* Utility for flow arrows without SVG */
+        .arrow-down {
+            width: 0; 
+            height: 0; 
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 15px solid #4f46e5; /* indigo-600 */
+            margin: 0 auto;
+        }
+        
+        .arrow-right {
+            width: 0; 
+            height: 0; 
+            border-top: 10px solid transparent;
+            border-bottom: 10px solid transparent;
+            border-left: 15px solid #4f46e5;
+        }
+    </style>
+    <!-- 
+        Palette Selected: Vibrant Tech
+        Primary: Indigo-900 (#312e81)
+        Secondary: Cyan-500 (#06b6d4)
+        Accent 1: Fuchsia-500 (#d946ef)
+        Accent 2: Orange-500 (#f97316)
+        Background: Slate-100/White
+    -->
+    <!-- 
+        Narrative Plan:
+        1. Intro: Define Otel & Observability.
+        2. Pillars: Visualizing Traces, Metrics, Logs (Doughnut Chart).
+        3. Deep Dive: Visualizing a "Trace" (Gantt/Bar Chart) & "Metric" (Line Chart).
+        4. Architecture: HTML Flow Diagram (App -> Collector -> Backend).
+        5. Collector Internals: HTML Pipeline Diagram (Receiver -> Processor -> Exporter).
+        6. Benefits & Conclusion.
+    -->
+</head>
+<body class="text-slate-800">
+
+    <!-- Header Section -->
+    <header class="bg-gradient-to-r from-indigo-900 via-indigo-800 to-cyan-700 text-white p-8 shadow-lg">
+        <div class="max-w-6xl mx-auto text-center">
+            <h1 class="text-3xl md:text-5xl font-bold mb-4">📊 OpenTelemetry (Otel) の仕組み</h1>
+            <p class="text-xl md:text-2xl font-light text-cyan-200">クラウドネイティブ時代の「オブザーバビリティ（可観測性）」を実現する標準規格</p>
+        </div>
+    </header>
+
+    <!-- Intro Content -->
+    <main class="max-w-6xl mx-auto p-4 md:p-8 space-y-12">
+        
+        <section class="bg-white rounded-xl shadow-md p-6 md:p-8 border-l-8 border-indigo-600">
+            <h2 class="text-2xl font-bold text-indigo-900 mb-4">OpenTelemetryとは？</h2>
+            <p class="leading-relaxed text-lg text-slate-600 mb-4">
+                OpenTelemetryは、アプリケーションから<strong>「トレース」「メトリクス」「ログ」</strong>の3つのデータを収集し、標準化された方法でバックエンドシステムへ転送する、ベンダーニュートラルなオープンソースプロジェクトです。特定のツールに依存せず、システム全体の状態を可視化（オブザーバビリティ）するための「共通言語」を提供します。
+            </p>
+        </section>
+
+        <!-- Section 1: The Three Pillars -->
+        <section>
+            <div class="mb-6">
+                <h2 class="text-3xl font-bold text-indigo-900 border-b-4 border-cyan-400 inline-block pb-2">1. オブザーバビリティの三本柱</h2>
+                <p class="mt-4 text-slate-600">システムの状態を理解するためには、以下の3種類のデータが不可欠です。これらは相互に補完し合い、システムの完全な可視性を提供します。</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                <!-- Visual: Doughnut Chart Composition -->
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="text-xl font-bold text-center mb-4 text-slate-700">データ構成要素</h3>
+                    <div class="chart-container chart-height-sm max-w-md mx-auto">
+                        <canvas id="pillarsChart"></canvas>
+                    </div>
+                    <p class="text-center text-sm text-slate-500 mt-4">3つの要素が組み合わさって初めて「可観測性」が実現します。</p>
+                </div>
+
+                <!-- Content: Cards -->
+                <div class="space-y-4">
+                    <!-- Traces -->
+                    <div class="bg-indigo-50 border-l-4 border-fuchsia-500 p-4 rounded-r-lg shadow-sm hover:shadow-md transition">
+                        <h3 class="font-bold text-lg text-fuchsia-700 flex items-center">
+                            <span class="text-2xl mr-2">🕸️</span> トレース (Traces)
+                        </h3>
+                        <p class="text-sm text-slate-700 mt-1">
+                            リクエストの経路とライフサイクル。<strong>「どこで時間がかかっているか？」</strong>を特定します。分散システムにおける依存関係を可視化します。
+                        </p>
+                    </div>
+                    <!-- Metrics -->
+                    <div class="bg-indigo-50 border-l-4 border-cyan-500 p-4 rounded-r-lg shadow-sm hover:shadow-md transition">
+                        <h3 class="font-bold text-lg text-cyan-700 flex items-center">
+                            <span class="text-2xl mr-2">📈</span> メトリクス (Metrics)
+                        </h3>
+                        <p class="text-sm text-slate-700 mt-1">
+                            時系列の数値データ。<strong>「システムは健康か？」</strong>（CPU使用率、エラー率など）を監視し、トレンドを分析します。
+                        </p>
+                    </div>
+                    <!-- Logs -->
+                    <div class="bg-indigo-50 border-l-4 border-orange-500 p-4 rounded-r-lg shadow-sm hover:shadow-md transition">
+                        <h3 class="font-bold text-lg text-orange-700 flex items-center">
+                            <span class="text-2xl mr-2">📝</span> ログ (Logs)
+                        </h3>
+                        <p class="text-sm text-slate-700 mt-1">
+                            個別のイベント記録。<strong>「何が起きたか？」</strong>の詳細情報。エラー診断や特定イベントの調査に使用されます。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Deep Dive Visualization (Trace & Metrics) -->
+        <section>
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-indigo-900 mb-2">データの可視化イメージ</h2>
+                <p class="text-slate-600">実際に収集されるデータがどのように見えるか、概念図で理解しましょう。</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Trace Visualization (Gantt Concept) -->
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="text-lg font-bold text-fuchsia-700 mb-2">トレースの構造 (スパン)</h3>
+                    <p class="text-xs text-slate-500 mb-4">ユーザーリクエスト(親)から、DBやAPIへの呼び出し(子)が連鎖する様子。</p>
+                    <div class="chart-container chart-height-sm">
+                        <canvas id="traceChart"></canvas>
+                    </div>
+                    <div class="mt-4 bg-fuchsia-50 p-3 rounded text-xs text-fuchsia-900">
+                        <strong>解説:</strong> 各バーは「スパン」と呼ばれ、開始・終了時間と親子関係を持ちます。全体で1つの「トレース」を構成します。
+                    </div>
+                </div>
+
+                <!-- Metrics Visualization (Line Chart) -->
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="text-lg font-bold text-cyan-700 mb-2">メトリクスの推移</h3>
+                    <p class="text-xs text-slate-500 mb-4">時間の経過とともに変化するシステムの状態（例：CPU負荷）。</p>
+                    <div class="chart-container chart-height-sm">
+                        <canvas id="metricsChart"></canvas>
+                    </div>
+                    <div class="mt-4 bg-cyan-50 p-3 rounded text-xs text-cyan-900">
+                        <strong>解説:</strong> 定期的にサンプリングされた数値データにより、異常なスパイクや傾向を一目で把握できます。
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Data Flow Architecture -->
+        <section class="bg-slate-800 text-white rounded-2xl shadow-xl overflow-hidden">
+            <div class="p-8">
+                <h2 class="text-3xl font-bold text-center mb-8">🔄 OpenTelemetry データフローパイプライン</h2>
+                
+                <!-- Custom HTML Flow Diagram (No SVG) -->
+                <div class="flex flex-col md:flex-row items-stretch justify-between gap-4 md:gap-2">
+                    
+                    <!-- Step 1: App/SDK -->
+                    <div class="flex-1 bg-slate-700 p-4 rounded-lg border-2 border-indigo-400 relative group hover:bg-slate-600 transition duration-300">
+                        <div class="absolute -top-3 left-4 bg-indigo-500 text-xs px-2 py-1 rounded font-bold">Step 1: 生成</div>
+                        <div class="text-4xl mb-2 text-center">📱</div>
+                        <h4 class="font-bold text-lg text-center mb-2">App & Otel SDK</h4>
+                        <p class="text-xs text-slate-300 text-center">
+                            リクエスト発生時にトレースIDを発行。自動計測(Instrumentation)によりデータを生成。
+                        </p>
+                        <div class="mt-3 text-center">
+                            <span class="inline-block bg-slate-900 px-2 py-1 rounded text-xs font-mono text-green-400">OTLP形式</span>
+                        </div>
+                    </div>
+
+                    <!-- Arrow -->
+                    <div class="flex items-center justify-center">
+                        <span class="text-2xl text-indigo-400 hidden md:block">➔</span>
+                        <span class="text-2xl text-indigo-400 block md:hidden">⬇</span>
+                    </div>
+
+                    <!-- Step 2: Collector -->
+                    <div class="flex-1 bg-slate-700 p-4 rounded-lg border-2 border-cyan-400 relative group hover:bg-slate-600 transition duration-300">
+                        <div class="absolute -top-3 left-4 bg-cyan-500 text-slate-900 text-xs px-2 py-1 rounded font-bold">Step 2: 処理</div>
+                        <div class="text-4xl mb-2 text-center">⚙️</div>
+                        <h4 class="font-bold text-lg text-center mb-2">Otel Collector</h4>
+                        <p class="text-xs text-slate-300 text-center">
+                            データの受信(Receive)、加工(Process)、送信(Export)を行う中心ハブ。
+                        </p>
+                        <ul class="mt-2 text-xs text-cyan-200 list-disc list-inside">
+                            <li>機密情報の削除</li>
+                            <li>メタデータ付与</li>
+                            <li>バッチ処理</li>
+                        </ul>
+                    </div>
+
+                    <!-- Arrow -->
+                    <div class="flex items-center justify-center">
+                        <span class="text-2xl text-cyan-400 hidden md:block">➔</span>
+                        <span class="text-2xl text-cyan-400 block md:hidden">⬇</span>
+                    </div>
+
+                    <!-- Step 3: Backend -->
+                    <div class="flex-1 bg-slate-700 p-4 rounded-lg border-2 border-orange-400 relative group hover:bg-slate-600 transition duration-300">
+                        <div class="absolute -top-3 left-4 bg-orange-500 text-slate-900 text-xs px-2 py-1 rounded font-bold">Step 3: 保存・分析</div>
+                        <div class="text-4xl mb-2 text-center">🖥️</div>
+                        <h4 class="font-bold text-lg text-center mb-2">Backends</h4>
+                        <p class="text-xs text-slate-300 text-center">
+                            Prometheus, Jaeger, Datadogなど。人間が分析するためのUIを提供。
+                        </p>
+                        <div class="mt-3 grid grid-cols-2 gap-2 text-center">
+                            <span class="bg-slate-900 p-1 rounded text-xs text-slate-400">Jaeger</span>
+                            <span class="bg-slate-900 p-1 rounded text-xs text-slate-400">Prometheus</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Inside the Collector -->
+        <section>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+                <div class="md:col-span-1">
+                    <h2 class="text-2xl font-bold text-indigo-900 mb-4">Otel Collectorの内部構造</h2>
+                    <p class="text-slate-600 mb-4">
+                        Collectorは3つの主要コンポーネントで構成されるパイプラインです。この柔軟性がOtelの最大の強みです。
+                    </p>
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 text-sm text-yellow-800">
+                        <strong>ポイント:</strong> ベンダーロックインを回避！バックエンドを変更しても、アプリ側のコードを書き換える必要はなく、Collectorの設定を変えるだけです。
+                    </div>
+                </div>
+
+                <div class="md:col-span-2">
+                    <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                        <!-- Pipeline Visual using HTML/Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            
+                            <!-- Receiver -->
+                            <div class="text-center p-4 rounded bg-cyan-50 border border-cyan-200">
+                                <div class="text-2xl mb-1">📥</div>
+                                <h4 class="font-bold text-cyan-800">Receiver</h4>
+                                <div class="h-0.5 w-full bg-cyan-200 my-2"></div>
+                                <p class="text-xs text-slate-600">データの入り口。OTLP, Jaeger, Prometheus形式など多言語に対応。</p>
+                            </div>
+
+                            <!-- Processor -->
+                            <div class="text-center p-4 rounded bg-indigo-50 border border-indigo-200">
+                                <div class="text-2xl mb-1">🔄</div>
+                                <h4 class="font-bold text-indigo-800">Processor</h4>
+                                <div class="h-0.5 w-full bg-indigo-200 my-2"></div>
+                                <p class="text-xs text-slate-600">データの加工。フィルタリング、サンプリング、属性の追加・削除。</p>
+                            </div>
+
+                            <!-- Exporter -->
+                            <div class="text-center p-4 rounded bg-fuchsia-50 border border-fuchsia-200">
+                                <div class="text-2xl mb-1">📤</div>
+                                <h4 class="font-bold text-fuchsia-800">Exporter</h4>
+                                <div class="h-0.5 w-full bg-fuchsia-200 my-2"></div>
+                                <p class="text-xs text-slate-600">データの出口。バックエンドに合わせた形式に変換して送信。</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Flow indicator -->
+                        <div class="mt-4 flex justify-between px-12 text-slate-300">
+                            <span>➔ データ</span>
+                            <span>➔ 流れ</span>
+                            <span>➔</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Conclusion -->
+        <footer class="mt-12 bg-slate-200 p-8 rounded-xl text-center">
+            <h3 class="text-xl font-bold text-slate-700 mb-2">まとめ</h3>
+            <p class="text-slate-600 max-w-2xl mx-auto">
+                OpenTelemetryは、データの生成から収集、転送までを一貫して行う標準規格です。
+                これを導入することで、開発者は特定のモニタリングツールに縛られることなく、
+                自由かつ効率的にシステムを監視・改善できるようになります。
+            </p>
+            <div class="mt-6 flex justify-center gap-4">
+                <span class="px-4 py-2 bg-white rounded shadow text-indigo-600 font-bold text-sm">標準化</span>
+                <span class="px-4 py-2 bg-white rounded shadow text-cyan-600 font-bold text-sm">可観測性</span>
+                <span class="px-4 py-2 bg-white rounded shadow text-fuchsia-600 font-bold text-sm">柔軟性</span>
+            </div>
+        </footer>
+
+    </main>
+
+    <script>
+        // --- 1. Utility Functions ---
+
+        // Label Wrapping Logic (Strictly as per requirement)
+        function formatLabel(str, maxLen = 16) {
+            if (str.length <= maxLen) return str;
+            
+            const words = str.split(' ');
+            const lines = [];
+            let currentLine = words[0];
+
+            for (let i = 1; i < words.length; i++) {
+                if ((currentLine + " " + words[i]).length <= maxLen) {
+                    currentLine += " " + words[i];
+                } else {
+                    lines.push(currentLine);
+                    currentLine = words[i];
+                }
+            }
+            lines.push(currentLine);
+            return lines;
+        }
+
+        // Shared Tooltip Configuration (Strictly as per requirement)
+        const commonTooltipConfig = {
+            callbacks: {
+                title: function(tooltipItems) {
+                    const item = tooltipItems[0];
+                    let label = item.chart.data.labels[item.dataIndex];
+                    if (Array.isArray(label)) {
+                        return label.join(' ');
+                    } else {
+                        return label;
+                    }
+                }
+            }
+        };
+
+        // --- 2. Chart Configurations ---
+
+        // Chart 1: The Three Pillars (Doughnut)
+        // Goal: Inform/Composition
+        const ctxPillars = document.getElementById('pillarsChart').getContext('2d');
+        const labelsPillars = ['Traces (トレース)', 'Metrics (メトリクス)', 'Logs (ログ)'];
+        // Apply label wrapping
+        const processedLabelsPillars = labelsPillars.map(l => formatLabel(l));
+
+        new Chart(ctxPillars, {
+            type: 'doughnut',
+            data: {
+                labels: processedLabelsPillars,
+                datasets: [{
+                    data: [33.3, 33.3, 33.3], // Conceptual equal weight
+                    backgroundColor: [
+                        '#d946ef', // Fuchsia (Traces)
+                        '#06b6d4', // Cyan (Metrics)
+                        '#f97316'  // Orange (Logs)
+                    ],
+                    borderWidth: 0,
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            font: { family: "'Noto Sans JP', sans-serif" }
+                        }
+                    },
+                    tooltip: commonTooltipConfig
+                }
+            }
+        });
+
+        // Chart 2: Trace Visualization (Horizontal Bar / Gantt Style)
+        // Goal: Compare/Organize - Visualizing hierarchy and duration
+        const ctxTrace = document.getElementById('traceChart').getContext('2d');
+        const labelsTrace = [
+            'HTTP Request (Root)', 
+            'Auth Service Check', 
+            'Database Query (User)', 
+            'External API Payment', 
+            'Response Build'
+        ];
+        const processedLabelsTrace = labelsTrace.map(l => formatLabel(l));
+
+        new Chart(ctxTrace, {
+            type: 'bar',
+            data: {
+                labels: processedLabelsTrace,
+                datasets: [{
+                    label: '処理時間 (ms)',
+                    // Floating bars: [start, end]
+                    data: [
+                        [0, 200],   // Root spans whole request
+                        [10, 50],   // Auth happens early
+                        [60, 150],  // DB query happens in middle
+                        [160, 190], // Payment near end
+                        [190, 200]  // Response at end
+                    ],
+                    backgroundColor: [
+                        '#4f46e5', // Indigo
+                        '#d946ef', // Fuchsia
+                        '#f97316', // Orange
+                        '#06b6d4', // Cyan
+                        '#8b5cf6'  // Violet
+                    ],
+                    borderRadius: 4,
+                    barPercentage: 0.6
+                }]
+            },
+            options: {
+                indexAxis: 'y', // Horizontal Bar
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Timeline (milliseconds)' },
+                        grid: { display: false }
+                    },
+                    y: {
+                        grid: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: commonTooltipConfig
+                }
+            }
+        });
+
+        // Chart 3: Metrics Visualization (Line Chart)
+        // Goal: Change - Showing trends over time
+        const ctxMetrics = document.getElementById('metricsChart').getContext('2d');
+        const labelsMetrics = ['10:00', '10:05', '10:10', '10:15', '10:20', '10:25', '10:30'];
+        // No wrapping needed for short time labels, but good practice to map anyway
+        const processedLabelsMetrics = labelsMetrics.map(l => formatLabel(l));
+
+        new Chart(ctxMetrics, {
+            type: 'line',
+            data: {
+                labels: processedLabelsMetrics,
+                datasets: [{
+                    label: 'CPU Usage (%)',
+                    data: [20, 22, 45, 80, 55, 30, 25], // Simulated spike
+                    borderColor: '#06b6d4', // Cyan
+                    backgroundColor: 'rgba(6, 182, 212, 0.2)',
+                    tension: 0.4, // Smooth curve
+                    fill: true,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#06b6d4',
+                    pointRadius: 4
+                },
+                {
+                    label: 'Memory (MB)',
+                    data: [30, 32, 35, 40, 38, 35, 33],
+                    borderColor: '#6366f1', // Indigo
+                    backgroundColor: 'transparent',
+                    borderDash: [5, 5],
+                    tension: 0.4,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: { color: '#f1f5f9' }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: commonTooltipConfig
+                }
+            }
+        });
+
+        // Note: No SVG or Mermaid JS used.
+        // All diagrams implemented via HTML/CSS Grid and Flexbox.
+        // Color palette is consistent: Indigo/Cyan/Fuchsia/Orange.
+    </script>
+</body>
+</html>
