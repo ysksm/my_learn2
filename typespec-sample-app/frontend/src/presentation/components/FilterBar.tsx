@@ -1,4 +1,9 @@
-import { TodoStatus, TodoStatusLabels, PaginationInfo } from "../types/api";
+import {
+  TodoStatus,
+  TodoStatusLabels,
+  getAllTodoStatuses,
+} from "../../domain/value-objects/TodoStatus";
+import { PaginationInfo } from "../../domain/repositories/ITodoRepository";
 
 interface FilterBarProps {
   currentStatus: TodoStatus | undefined;
@@ -24,7 +29,7 @@ export function FilterBar({
           }
         >
           <option value="">すべて</option>
-          {Object.values(TodoStatus).map((status) => (
+          {getAllTodoStatuses().map((status) => (
             <option key={status} value={status}>
               {TodoStatusLabels[status]}
             </option>

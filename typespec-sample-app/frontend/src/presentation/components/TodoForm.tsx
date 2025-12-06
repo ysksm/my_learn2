@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { CreateTodoRequest } from "../types/api";
 
 interface TodoFormProps {
-  onSubmit: (data: CreateTodoRequest) => Promise<void>;
+  onSubmit: (title: string, description?: string) => Promise<boolean>;
 }
 
 export function TodoForm({ onSubmit }: TodoFormProps) {
@@ -22,12 +21,14 @@ export function TodoForm({ onSubmit }: TodoFormProps) {
 
     setIsSubmitting(true);
     try {
-      await onSubmit({
-        title: title.trim(),
-        description: description.trim() || undefined,
-      });
-      setTitle("");
-      setDescription("");
+      const success = await onSubmit(
+        title.trim(),
+        description.trim() || undefined
+      );
+      if (success) {
+        setTitle("");
+        setDescription("");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "エラーが発生しました");
     } finally {
