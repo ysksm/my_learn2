@@ -1,16 +1,19 @@
 import { useState } from "react";
+import { Todo } from "../../domain/entities/Todo";
 import {
-  Todo,
   TodoStatus,
   TodoStatusLabels,
   TodoStatusColors,
-  UpdateTodoRequest,
-} from "../types/api";
+  getAllTodoStatuses,
+} from "../../domain/value-objects/TodoStatus";
 
 interface TodoItemProps {
   todo: Todo;
-  onUpdate: (id: number, data: UpdateTodoRequest) => Promise<void>;
-  onDelete: (id: number) => Promise<void>;
+  onUpdate: (
+    id: number,
+    data: { title?: string; description?: string; status?: TodoStatus }
+  ) => Promise<boolean>;
+  onDelete: (id: number) => Promise<boolean>;
 }
 
 export function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
@@ -33,11 +36,13 @@ export function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
 
     setIsLoading(true);
     try {
-      await onUpdate(todo.id, {
+      const success = await onUpdate(todo.id, {
         title: editTitle.trim(),
         description: editDescription.trim() || undefined,
       });
-      setIsEditing(false);
+      if (success) {
+        setIsEditing(false);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -60,8 +65,8 @@ export function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
     setIsEditing(false);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString("ja-JP");
+  const formatDate = (date: Date) => {
+    return date.toLocaleString("ja-JP");
   };
 
   return (
@@ -110,7 +115,7 @@ export function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
               disabled={isLoading}
               style={{ borderColor: TodoStatusColors[todo.status] }}
             >
-              {Object.values(TodoStatus).map((status) => (
+              {getAllTodoStatuses().map((status) => (
                 <option key={status} value={status}>
                   {TodoStatusLabels[status]}
                 </option>

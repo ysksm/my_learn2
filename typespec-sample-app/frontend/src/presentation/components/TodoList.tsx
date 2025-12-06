@@ -1,10 +1,14 @@
-import { Todo, UpdateTodoRequest } from "../types/api";
+import { Todo } from "../../domain/entities/Todo";
+import { TodoStatus } from "../../domain/value-objects/TodoStatus";
 import { TodoItem } from "./TodoItem";
 
 interface TodoListProps {
   todos: Todo[];
-  onUpdate: (id: number, data: UpdateTodoRequest) => Promise<void>;
-  onDelete: (id: number) => Promise<void>;
+  onUpdate: (
+    id: number,
+    data: { title?: string; description?: string; status?: TodoStatus }
+  ) => Promise<boolean>;
+  onDelete: (id: number) => Promise<boolean>;
 }
 
 export function TodoList({ todos, onUpdate, onDelete }: TodoListProps) {
