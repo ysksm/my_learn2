@@ -1,0 +1,17 @@
+{
+  "name": "typespec-sample-app",
+  "version": "1.0.0",
+  "description": "TypeSpec + Express.js + React TypeScript サンプルアプリケーション",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install --prefix typespec && npm install --prefix backend && npm install --prefix frontend",
+    "build:typespec": "npm run build --prefix typespec",
+    "build:backend": "npm run build --prefix backend",
+    "build:frontend": "npm run build --prefix frontend",
+    "build:all": "npm run build:typespec && npm run build:backend && npm run build:frontend",
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "start:backend": "npm run start --prefix backend",
+    "start:frontend": "npm run preview --prefix frontend"
+  }
+}
