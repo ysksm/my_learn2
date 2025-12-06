@@ -1,0 +1,17 @@
+{
+  "name": "typespec-api",
+  "version": "1.0.0",
+  "description": "TypeSpec API定義",
+  "scripts": {
+    "build": "tsp compile .",
+    "watch": "tsp compile . --watch",
+    "format": "tsp format **/*.tsp"
+  },
+  "devDependencies": {
+    "@typespec/compiler": "^0.61.0",
+    "@typespec/http": "^0.61.0",
+    "@typespec/openapi": "^0.61.0",
+    "@typespec/openapi3": "^0.61.0",
+    "@typespec/rest": "^0.61.0"
+  }
+}
