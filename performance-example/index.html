@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chrome Performance Tab 学習サンプル</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>Chrome Performance Tab 学習サンプル</h1>
+    <p>各ボタンをクリックして、DevTools の Performance タブで問題を確認しましょう</p>
+  </header>
+
+  <main>
+    <!-- JavaScript Performance Issues -->
+    <section class="category">
+      <h2>JavaScript パフォーマンス問題</h2>
+
+      <div class="test-card">
+        <h3>1. 長いタスク (Long Task)</h3>
+        <p>メインスレッドをブロックする重い計算処理。Performance タブで赤い三角マークと "Long Task" として表示されます。</p>
+        <button onclick="runLongTask()">実行: 重い計算 (約2秒)</button>
+        <div class="indicator" id="longTaskIndicator"></div>
+
+        <details class="details-section">
+          <summary>原因と対策を見る</summary>
+          <div class="details-content">
+            <div class="cause">
+              <h4>原因</h4>
+              <ul>
+                <li>同期的なループ処理がメインスレッドを占有</li>
+                <li>50ms以上かかる処理は「Long Task」としてマークされる</li>
+                <li>Long Task中はユーザー入力やアニメーションが停止</li>
+                <li>ブラウザのレンダリングがブロックされUIがフリーズ</li>
+              </ul>
+            </div>
+            <div class="solution">
+              <h4>対策</h4>
+              <ul>
+                <li><strong>Web Worker</strong>: 重い計算を別スレッドで実行</li>
+                <li><strong>タスク分割</strong>: <code>setTimeout</code> や <code>requestIdleCallback</code> で処理を分割</li>
+                <li><strong>仮想化</strong>: 大量データは仮想スクロールで表示</li>
+                <li><strong>遅延読み込み</strong>: 必要になるまで処理を延期</li>
+              </ul>
+              <div class="code-example">
+                <strong>改善例:</strong>
+                <pre><code>// 悪い例: 同期処理
+for (let i = 0; i < 1000000; i++) { /* 重い処理 */ }
+
+// 良い例: Web Worker
+const worker = new Worker('heavy-task.js');
+worker.postMessage(data);
+worker.onmessage = (e) => console.log(e.data);</code></pre>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="test-card">
+        <h3>2. Layout Thrashing (強制同期レイアウト)</h3>
+        <p>DOM の読み取りと書き込みを交互に行い、強制的なレイアウト再計算を発生させます。紫色の "Layout" が大量に表示されます。</p>
+        <button onclick="runLayoutThrashing()">実行: Layout Thrashing</button>
+        <div class="boxes-container" id="layoutBoxes"></div>
+
+        <details class="details-section">
+          <summary>原因と対策を見る</summary>
+          <div class="details-content">
+            <div class="cause">
+              <h4>原因</h4>
+              <ul>
+                <li>DOM の書き込み後に読み取りを行うと、ブラウザは最新のレイアウトを計算する必要がある</li>
+                <li>ループ内で読み書きを交互に行うと、毎回レイアウトが強制的に再計算される</li>
+                <li>レイアウトを強制するプロパティ: <code>offsetHeight</code>, <code>offsetWidth</code>, <code>clientHeight</code>, <code>scrollTop</code> など</li>
+              </ul>
+            </div>
+            <div class="solution">
+              <h4>対策</h4>
+              <ul>
+                <li><strong>読み書き分離</strong>: まず全ての読み取りを行い、その後全ての書き込みを行う</li>
+                <li><strong>FastDOM</strong>: 読み書きをバッチ処理するライブラリを使用</li>
+                <li><strong>CSS変数</strong>: JavaScript の代わりに CSS カスタムプロパティを使用</li>
+                <li><strong>requestAnimationFrame</strong>: 書き込みを次フレームに延期</li>
+              </ul>
+              <div class="code-example">
+                <strong>改善例:</strong>
+                <pre><code>// 悪い例: 読み書きが交互
+elements.forEach(el => {
+  const width = el.offsetWidth;  // 読み取り
+  el.style.width = width + 10 + 'px';  // 書き込み
+});
+
+// 良い例: 読み書き分離
+const widths = elements.map(el => el.offsetWidth);  // 全て読み取り
+elements.forEach((el, i) => {
+  el.style.width = widths[i] + 10 + 'px';  // 全て書き込み
+});</code></pre>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="test-card">
+        <h3>3. 大量の DOM 操作</h3>
+        <p>1000個の要素を個別に追加。"Recalculate Style" と "Layout" が頻発します。</p>
+        <button onclick="runDomManipulation()">実行: 大量DOM追加</button>
+        <button onclick="clearDomElements()">クリア</button>
+        <div class="dom-container" id="domContainer"></div>
+
+        <details class="details-section">
+          <summary>原因と対策を見る</summary>
+          <div class="details-content">
+            <div class="cause">
+              <h4>原因</h4>
+              <ul>
+                <li>DOM への追加ごとにスタイル再計算とレイアウトが発生</li>
+                <li>1000回の追加 = 1000回のリフロー（最悪ケース）</li>
+                <li>DOM ツリーの変更はコストが高い操作</li>
+              </ul>
+            </div>
+            <div class="solution">
+              <h4>対策</h4>
+              <ul>
+                <li><strong>DocumentFragment</strong>: メモリ上で構築してから一度に追加</li>
+                <li><strong>innerHTML</strong>: 文字列として構築して一括挿入</li>
+                <li><strong>display: none</strong>: 非表示状態で変更し、完了後に表示</li>
+                <li><strong>cloneNode</strong>: 切り離したノードで変更後に再追加</li>
+              </ul>
+              <div class="code-example">
+                <strong>改善例:</strong>
+                <pre><code>// 悪い例: 1つずつ追加
+for (let i = 0; i < 1000; i++) {
+  container.appendChild(createItem());
+}
+
+// 良い例: DocumentFragment
+const fragment = document.createDocumentFragment();
+for (let i = 0; i < 1000; i++) {
+  fragment.appendChild(createItem());
+}
+container.appendChild(fragment);  // 1回の追加</code></pre>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="test-card">
+        <h3>4. メモリリーク</h3>
+        <p>クリアされない参照を蓄積。Memory タブと併用して確認できます。</p>
+        <button onclick="createMemoryLeak()">実行: メモリリーク作成</button>
+        <button onclick="clearMemoryLeak()">メモリクリア</button>
+        <div class="indicator" id="memoryIndicator">蓄積オブジェクト: 0</div>
+
+        <details class="details-section">
+          <summary>原因と対策を見る</summary>
+          <div class="details-content">
+            <div class="cause">
+              <h4>原因</h4>
+              <ul>
+                <li><strong>グローバル変数</strong>: グローバルスコープに保持された参照</li>
+                <li><strong>イベントリスナー</strong>: 削除されない要素に紐づいたリスナー</li>
+                <li><strong>クロージャ</strong>: 外部スコープの変数への参照を保持</li>
+                <li><strong>タイマー</strong>: clearInterval/clearTimeout されないタイマー</li>
+                <li><strong>DOM参照</strong>: 削除済みDOM要素への参照を保持</li>
+              </ul>
+            </div>
+            <div class="solution">
+              <h4>対策</h4>
+              <ul>
+                <li><strong>WeakMap/WeakSet</strong>: 弱参照を使用してGCを許可</li>
+                <li><strong>明示的なクリーンアップ</strong>: コンポーネント破棄時にリスナーを削除</li>
+                <li><strong>スコープ管理</strong>: 必要な範囲でのみ変数を保持</li>
+                <li><strong>Memory タブ</strong>: ヒープスナップショットで漏れを特定</li>
+              </ul>
+              <div class="code-example">
+                <strong>改善例:</strong>
+                <pre><code>// 悪い例: グローバル配列に蓄積
+const cache = [];
+function addData(data) {
+  cache.push(data);  // 永遠に増加
+}
+
+// 良い例: WeakMap + 明示的クリーンアップ
+const cache = new WeakMap();
+function cleanup() {
+  // WeakMap は参照がなくなると自動でGCされる
+}</code></pre>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="test-card">
+        <h3>5. 頻繁なタイマー</h3>
+        <p>setInterval で高頻度の更新を実行。"Timer Fired" イベントが大量に発生します。</p>
+        <button onclick="startFrequentTimer()">開始: 1ms タイマー</button>
+        <button onclick="stopFrequentTimer()">停止</button>
+        <div class="indicator" id="timerIndicator">タイマー: 停止中</div>
+
+        <details class="details-section">
+          <summary>原因と対策を見る</summary>
+          <div class="details-content">
+            <div class="cause">
+              <h4>原因</h4>
+              <ul>
+                <li>1ms間隔のタイマーは現実的には約4ms間隔で実行される（ブラウザ制限）</li>
+                <li>毎回のコールバックでメインスレッドが占有される</li>
+                <li>タイマー内での重い処理は問題を悪化させる</li>
+                <li>バックグラウンドタブでも実行され続ける場合がある</li>
+              </ul>
+            </div>
+            <div class="solution">
+              <h4>対策</h4>
+              <ul>
+                <li><strong>requestAnimationFrame</strong>: アニメーションには60fpsで最適化されたrAFを使用</li>
+                <li><strong>適切な間隔</strong>: 必要最小限の頻度に設定（例: 100ms, 1000ms）</li>
+                <li><strong>Visibility API</strong>: バックグラウンドタブではタイマーを停止</li>
+                <li><strong>スロットリング</strong>: 実行頻度を制限</li>
+              </ul>
+              <div class="code-example">
+                <strong>改善例:</strong>
+                <pre><code>// 悪い例: 高頻度タイマー
+setInterval(() => updateUI(), 1);
+
+// 良い例: requestAnimationFrame
+function animate() {
+  updateUI();
+  requestAnimationFrame(animate);
+}
+requestAnimationFrame(animate);
+
+// 良い例: Visibility APIで制御
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) stopTimer();
+  else startTimer();
+});</code></pre>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- CSS Performance Issues -->
+    <section class="category">
+      <h2>CSS パフォーマンス問題</h2>
+
+      <div class="test-card">
+        <h3>6. 重い CSS アニメーション (非推奨プロパティ)</h3>
+        <p>width/height/top/left のアニメーションは Layout を引き起こします。緑色の "Paint" と紫色の "Layout" が頻発します。</p>
+        <button onclick="toggleHeavyAnimation()">トグル: 重いアニメーション</button>
+        <div class="animation-container">
+          <div class="heavy-animation-box" id="heavyBox">Layout<br>発生</div>
+        </div>
+
+        <details class="details-section">
+          <summary>原因と対策を見る</summary>
+          <div class="details-content">
+            <div class="cause">
+              <h4>原因</h4>
+              <ul>
+                <li><strong>レイアウトプロパティ</strong>: width, height, top, left, margin, padding などの変更はレイアウト再計算を引き起こす</li>
+                <li><strong>レンダリングパイプライン</strong>: Layout → Paint → Composite の全工程が毎フレーム実行</li>
+                <li>メインスレッドで処理されるため、他の処理をブロック</li>
+              </ul>
+              <div class="pipeline">
+                <span class="pipeline-step bad">JavaScript</span>
+                <span class="arrow">→</span>
+                <span class="pipeline-step bad">Style</span>
+                <span class="arrow">→</span>
+                <span class="pipeline-step bad">Layout</span>
+                <span class="arrow">→</span>
+                <span class="pipeline-step bad">Paint</span>
+                <span class="arrow">→</span>
+                <span class="pipeline-step">Composite</span>
+              </div>
+            </div>
+            <div class="solution">
+              <h4>対策</h4>
+              <ul>
+                <li><strong>transform を使用</strong>: <code>translateX/Y</code> で移動、<code>scale</code> でサイズ変更</li>
+                <li><strong>opacity を使用</strong>: 透明度変更は Composite のみ</li>
+                <li><strong>will-change</strong>: 変更予定のプロパティを事前に宣言</li>
+                <li><strong>GPUアクセラレーション</strong>: transform は GPU で処理される</li>
+              </ul>
+              <div class="code-example">
+                <strong>改善例:</strong>
+                <pre><code>/* 悪い例: レイアウトを引き起こす */
+@keyframes bad {
+  from { left: 0; width: 100px; }
+  to { left: 200px; width: 150px; }
+}
+
+/* 良い例: Compositeのみ */
+@keyframes good {
+  from { transform: translateX(0) scale(1); }
+  to { transform: translateX(200px) scale(1.5); }
+}</code></pre>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="test-card">
+        <h3>7. 軽い CSS アニメーション (推奨プロパティ)</h3>
+        <p>transform/opacity のアニメーションは Composite のみで高速。比較してみてください。</p>
+        <button onclick="toggleLightAnimation()">トグル: 軽いアニメーション</button>
+        <div class="animation-container">
+          <div class="light-animation-box" id="lightBox">Composite<br>のみ</div>
+        </div>
+
+        <details class="details-section">
+          <summary>原因と対策を見る</summary>
+          <div class="details-content">
+            <div class="cause">
+              <h4>なぜ高速か</h4>
+              <ul>
+                <li><strong>Composite のみ</strong>: transform と opacity は Layout/Paint をスキップ</li>
+                <li><strong>GPU 処理</strong>: 専用のコンポジターレイヤーで処理</li>
+                <li><strong>メインスレッド非依存</strong>: JavaScript の処理と並行して動作</li>
+              </ul>
+              <div class="pipeline">
+                <span class="pipeline-step">JavaScript</span>
+                <span class="arrow">→</span>
+                <span class="pipeline-step">Style</span>
+                <span class="arrow">→</span>
+                <span class="pipeline-step skip">Layout</span>
+                <span class="arrow">→</span>
+                <span class="pipeline-step skip">Paint</span>
+                <span class="arrow">→</span>
+                <span class="pipeline-step good">Composite</span>
+              </div>
+            </div>
+            <div class="solution">
+              <h4>推奨プロパティ</h4>
+              <table class="property-table">
+                <tr>
+                  <th>目的</th>
+                  <th>避けるべき</th>
+                  <th>推奨</th>
+                </tr>
+                <tr>
+                  <td>移動</td>
+                  <td><code>top, left, right, bottom</code></td>
+                  <td><code>transform: translate()</code></td>
+                </tr>
+                <tr>
+                  <td>サイズ変更</td>
+                  <td><code>width, height</code></td>
+                  <td><code>transform: scale()</code></td>
+                </tr>
+                <tr>
+                  <td>回転</td>
+                  <td>-</td>
+                  <td><code>transform: rotate()</code></td>
+                </tr>
+                <tr>
+                  <td>表示/非表示</td>
+                  <td><code>visibility, display</code></td>
+                  <td><code>opacity</code></td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="test-card">
+        <h3>8. 複雑な CSS セレクタ</h3>
+        <p>深いネストや複雑なセレクタはスタイル計算を遅くします。</p>
+        <button onclick="addComplexElements()">実行: 複雑な要素追加</button>
+        <button onclick="clearComplexElements()">クリア</button>
+        <div id="complexContainer" class="complex-container"></div>
+
+        <details class="details-section">
+          <summary>原因と対策を見る</summary>
+          <div class="details-content">
+            <div class="cause">
+              <h4>原因</h4>
+              <ul>
+                <li><strong>セレクタの評価順序</strong>: ブラウザはセレクタを右から左に評価する</li>
+                <li><strong>深いネスト</strong>: 各レベルで親要素をチェックする必要がある</li>
+                <li><strong>複雑な疑似クラス</strong>: <code>:nth-child</code>, <code>:not</code> などは計算コストが高い</li>
+                <li><strong>要素数</strong>: セレクタは全ての要素に対してマッチングを試みる</li>
+              </ul>
+              <div class="code-example">
+                <strong>遅いセレクタの例:</strong>
+                <pre><code>.container div.item ul li a.link span { }
+div[data-id="1"]:nth-child(odd):not(.excluded):hover { }</code></pre>
+              </div>
+            </div>
+            <div class="solution">
+              <h4>対策</h4>
+              <ul>
+                <li><strong>BEM 命名規則</strong>: フラットなクラス名で高速マッチング</li>
+                <li><strong>ID セレクタ</strong>: 最速だが、再利用性とのトレードオフ</li>
+                <li><strong>クラスセレクタ</strong>: 要素セレクタより高速</li>
+                <li><strong>ネストを浅く</strong>: 2-3レベル以内に抑える</li>
+              </ul>
+              <div class="code-example">
+                <strong>改善例:</strong>
+                <pre><code>/* 悪い例 */
+.nav .menu .item .link .icon { }
+
+/* 良い例: BEM */
+.nav__icon { }</code></pre>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="test-card">
+        <h3>9. Box Shadow / Filter (重いペイント)</h3>
+        <p>box-shadow や filter は Paint 処理が重くなります。</p>
+        <button onclick="toggleHeavyEffects()">トグル: 重いエフェクト</button>
+        <div class="effects-container" id="effectsContainer">
+          <div class="effect-box">エフェクト適用</div>
+          <div class="effect-box">エフェクト適用</div>
+          <div class="effect-box">エフェクト適用</div>
+        </div>
+
+        <details class="details-section">
+          <summary>原因と対策を見る</summary>
+          <div class="details-content">
+            <div class="cause">
+              <h4>原因</h4>
+              <ul>
+                <li><strong>box-shadow</strong>: 影の計算とぼかし処理は高コスト</li>
+                <li><strong>filter: blur()</strong>: 周囲のピクセルを参照してぼかしを計算</li>
+                <li><strong>filter: drop-shadow()</strong>: 形状に沿った影の計算</li>
+                <li><strong>アニメーション時</strong>: 毎フレーム Paint が発生</li>
+              </ul>
+            </div>
+            <div class="solution">
+              <h4>対策</h4>
+              <ul>
+                <li><strong>will-change</strong>: <code>will-change: filter</code> でレイヤーを分離</li>
+                <li><strong>画像で代替</strong>: 静的な影は画像として用意</li>
+                <li><strong>シンプルな影</strong>: ぼかし半径を小さく、影の数を減らす</li>
+                <li><strong>アニメーション回避</strong>: 影自体のアニメーションは避ける</li>
+              </ul>
+              <div class="code-example">
+                <strong>改善例:</strong>
+                <pre><code>/* 悪い例: 複数の重い影 */
+box-shadow:
+  0 0 20px rgba(0,0,0,0.5),
+  0 0 40px rgba(0,0,0,0.3),
+  0 0 60px rgba(0,0,0,0.2);
+
+/* 良い例: シンプルな影 */
+box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+/* または疑似要素 + will-change */
+.card::after {
+  will-change: opacity;
+  /* 影のスタイル */
+}</code></pre>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- Rendering Issues -->
+    <section class="category">
+      <h2>レンダリング問題</h2>
+
+      <div class="test-card">
+        <h3>10. 強制リフロー</h3>
+        <p>offsetHeight などを読み取ると強制的にレイアウトが発生します。</p>
+        <button onclick="forceReflow()">実行: 強制リフロー 100回</button>
+        <div class="reflow-container" id="reflowContainer">
+          <div class="reflow-box">リフロー対象</div>
+        </div>
+
+        <details class="details-section">
+          <summary>原因と対策を見る</summary>
+          <div class="details-content">
+            <div class="cause">
+              <h4>原因</h4>
+              <p>以下のプロパティを読み取ると、ブラウザは最新のレイアウト情報を返すために強制的にレイアウトを計算します:</p>
+              <ul class="property-list">
+                <li><code>offsetTop</code>, <code>offsetLeft</code>, <code>offsetWidth</code>, <code>offsetHeight</code></li>
+                <li><code>scrollTop</code>, <code>scrollLeft</code>, <code>scrollWidth</code>, <code>scrollHeight</code></li>
+                <li><code>clientTop</code>, <code>clientLeft</code>, <code>clientWidth</code>, <code>clientHeight</code></li>
+                <li><code>getComputedStyle()</code></li>
+                <li><code>getBoundingClientRect()</code></li>
+              </ul>
+            </div>
+            <div class="solution">
+              <h4>対策</h4>
+              <ul>
+                <li><strong>キャッシュ</strong>: 値を変数に保存して再利用</li>
+                <li><strong>バッチ処理</strong>: 読み取りと書き込みを分離</li>
+                <li><strong>ResizeObserver</strong>: サイズ変更の監視に使用</li>
+                <li><strong>IntersectionObserver</strong>: 可視性の判定に使用</li>
+              </ul>
+              <div class="code-example">
+                <strong>改善例:</strong>
+                <pre><code>// 悪い例: ループ内で読み取り
+for (let i = 0; i < 100; i++) {
+  el.style.width = el.offsetWidth + 1 + 'px';
+}
+
+// 良い例: キャッシュして使用
+const width = el.offsetWidth;
+for (let i = 0; i < 100; i++) {
+  el.style.width = width + i + 'px';
+}
+// 最後に一度だけ読み取り</code></pre>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="test-card">
+        <h3>11. スクロールイベントの問題</h3>
+        <p>スクロールイベントで重い処理を実行。スクロールしてみてください。</p>
+        <button onclick="toggleScrollHandler()">トグル: 重いスクロールハンドラ</button>
+        <div class="scroll-container" id="scrollContainer">
+          <div class="scroll-content">
+            スクロールしてください。重いハンドラがONの場合、カクつきます。
+            <br><br>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+            <br><br>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+            <br><br>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+          </div>
+        </div>
+        <div class="indicator" id="scrollIndicator">スクロールハンドラ: OFF</div>
+
+        <details class="details-section">
+          <summary>原因と対策を見る</summary>
+          <div class="details-content">
+            <div class="cause">
+              <h4>原因</h4>
+              <ul>
+                <li><strong>高頻度発火</strong>: スクロールイベントは1秒に何十回も発火</li>
+                <li><strong>同期処理</strong>: ハンドラ完了までスクロールがブロックされる可能性</li>
+                <li><strong>重い処理</strong>: DOM操作やレイアウト読み取りが毎回実行される</li>
+                <li><strong>パッシブでない</strong>: <code>preventDefault()</code> 可能なリスナーは最適化されない</li>
+              </ul>
+            </div>
+            <div class="solution">
+              <h4>対策</h4>
+              <ul>
+                <li><strong>passive: true</strong>: スクロールをブロックしないことを明示</li>
+                <li><strong>スロットリング</strong>: 実行頻度を制限（例: 100ms間隔）</li>
+                <li><strong>デバウンス</strong>: スクロール停止後に1回だけ実行</li>
+                <li><strong>IntersectionObserver</strong>: 要素の可視性検出に使用</li>
+                <li><strong>requestAnimationFrame</strong>: フレームごとに1回だけ処理</li>
+              </ul>
+              <div class="code-example">
+                <strong>改善例:</strong>
+                <pre><code>// 悪い例
+el.addEventListener('scroll', heavyHandler);
+
+// 良い例: passive + rAF
+let ticking = false;
+el.addEventListener('scroll', () => {
+  if (!ticking) {
+    requestAnimationFrame(() => {
+      handleScroll();
+      ticking = false;
+    });
+    ticking = true;
+  }
+}, { passive: true });</code></pre>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- Combined Stress Test -->
+    <section class="category">
+      <h2>総合ストレステスト</h2>
+
+      <div class="test-card">
+        <h3>12. すべてを同時実行</h3>
+        <p>複数の問題を同時に発生させ、Performance タブで分析してみましょう。</p>
+        <button onclick="runStressTest()">実行: ストレステスト</button>
+        <button onclick="stopStressTest()">停止</button>
+        <div class="stress-container" id="stressContainer"></div>
+
+        <details class="details-section">
+          <summary>分析のポイント</summary>
+          <div class="details-content">
+            <div class="cause">
+              <h4>ストレステストで発生する問題</h4>
+              <ul>
+                <li><strong>Long Task</strong>: 毎フレームの重い計算</li>
+                <li><strong>Layout Thrashing</strong>: 200要素への読み書き</li>
+                <li><strong>Forced Reflow</strong>: サイズ変更と読み取りの繰り返し</li>
+                <li><strong>Memory 増加</strong>: オブジェクトの蓄積</li>
+                <li><strong>Paint</strong>: アニメーションによる再描画</li>
+              </ul>
+            </div>
+            <div class="solution">
+              <h4>Performance タブでの分析方法</h4>
+              <ol>
+                <li>レコーディングを開始</li>
+                <li>ストレステストを実行（3-5秒）</li>
+                <li>レコーディングを停止</li>
+                <li>以下を確認:
+                  <ul>
+                    <li><strong>FPS</strong>: 緑のグラフ（理想は60fps）</li>
+                    <li><strong>CPU</strong>: 黄色のグラフ（100%に近いと問題）</li>
+                    <li><strong>Main</strong>: タスクの詳細（赤い三角を探す）</li>
+                    <li><strong>Summary</strong>: 処理の内訳</li>
+                  </ul>
+                </li>
+              </ol>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <aside class="guide">
+    <h2>Chrome Performance タブの使い方</h2>
+
+    <div class="guide-section">
+      <h3>基本操作</h3>
+      <ol>
+        <li><kbd>F12</kbd> または <kbd>Cmd+Option+I</kbd> で DevTools を開く</li>
+        <li>"Performance" タブを選択</li>
+        <li>記録ボタンでレコーディング開始</li>
+        <li>問題のある操作を実行</li>
+        <li>停止ボタンで停止</li>
+      </ol>
+    </div>
+
+    <div class="guide-section">
+      <h3>見るべきポイント</h3>
+      <table>
+        <tr>
+          <th>表示</th>
+          <th>意味</th>
+          <th>対策</th>
+        </tr>
+        <tr>
+          <td>赤い三角</td>
+          <td>Long Task (50ms超)</td>
+          <td>処理を分割、Web Worker使用</td>
+        </tr>
+        <tr>
+          <td>紫 (Layout)</td>
+          <td>レイアウト計算</td>
+          <td>DOM読み書きを分離</td>
+        </tr>
+        <tr>
+          <td>緑 (Paint)</td>
+          <td>描画処理</td>
+          <td>transform/opacity を使用</td>
+        </tr>
+        <tr>
+          <td>黄 (Script)</td>
+          <td>JavaScript 実行</td>
+          <td>処理の最適化</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="guide-section">
+      <h3>便利な機能</h3>
+      <ul>
+        <li><strong>CPU throttling</strong>: 低スペック環境をシミュレート</li>
+        <li><strong>Network throttling</strong>: 遅い回線をシミュレート</li>
+        <li><strong>Screenshots</strong>: 各時点の画面をキャプチャ</li>
+        <li><strong>Call Tree</strong>: 関数の呼び出し階層を確認</li>
+        <li><strong>Bottom-Up</strong>: 最も時間のかかった処理を確認</li>
+      </ul>
+    </div>
+
+    <div class="guide-section">
+      <h3>追加ツール</h3>
+      <ul>
+        <li><strong>Rendering タブ</strong>: Paint flashing で再描画を可視化</li>
+        <li><strong>Layers タブ</strong>: レイヤー構成を確認</li>
+        <li><strong>Memory タブ</strong>: メモリ使用量とリークを確認</li>
+        <li><strong>Coverage タブ</strong>: 未使用コードを検出</li>
+      </ul>
+    </div>
+  </aside>
+
+  <script src="script.js"></script>
+</body>
+</html>
