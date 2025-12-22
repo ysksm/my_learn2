@@ -2,6 +2,79 @@
 
 Chrome DevTools の Performance タブの使い方を学ぶためのインタラクティブなサンプルです。各種パフォーマンス問題を意図的に発生させ、その原因とメカニズム、対策を学べます。
 
+---
+
+## 目次・パフォーマンス問題一覧
+
+| # | 問題 | カテゴリ | Performance タブ指標 | フレームチャート表示 | 主な対策 |
+|:-:|------|---------|---------------------|---------------------|---------|
+| 1 | [Long Task](#1-long-task長いタスク) | JS | **Task** > 50ms, **Total Blocking Time** | 🔴 赤い三角マーク, 黄色の長いバー `Task` | Web Worker, タスク分割 |
+| 2 | [Layout Thrashing](#2-layout-thrashing強制同期レイアウト) | JS | **Layout** 回数, **Forced reflow** 警告 | 紫 `Layout` が連続発生, ⚠️ 警告アイコン | 読み書き分離 |
+| 3 | [大量DOM操作](#3-大量の-dom-操作) | JS | **Recalculate Style** 回数・時間 | 紫 `Recalculate Style` 頻発 | DocumentFragment |
+| 4 | [メモリリーク](#4-メモリリーク) | JS | **JS Heap Size** 増加傾向 | Memory グラフ右肩上がり📈 | WeakMap, クリーンアップ |
+| 5 | [頻繁なタイマー](#5-頻繁なタイマー) | JS | **Timer Fired** 回数 | 黄色 `Timer Fired` 大量発生 | requestAnimationFrame |
+| 6 | [重いCSSアニメーション](#6-7-css-アニメーション重い-vs-軽い) | CSS | **Layout**, **Paint** 毎フレーム | 紫 `Layout` + 緑 `Paint` 連続 | transform/opacity 使用 |
+| 7 | [軽いCSSアニメーション](#6-7-css-アニメーション重い-vs-軽い) | CSS | **Composite Layers** のみ | 緑 `Composite Layers` のみ | (比較用) |
+| 8 | [複雑なCSSセレクタ](#8-複雑な-css-セレクタ) | CSS | **Recalculate Style** 時間 | 紫 `Recalculate Style` 長時間 | BEM, フラットなセレクタ |
+| 9 | [Box Shadow/Filter](#9-box-shadow--filter) | CSS | **Paint** 時間 | 緑 `Paint` 処理が長い | will-change, シンプルな影 |
+| 10 | [強制リフロー](#10-強制リフロー) | Render | **Layout** 回数, **Rendering** 時間 | 紫 `Layout` 100回以上発生 | キャッシュ, Observer API |
+| 11 | [スクロールイベント](#11-スクロールイベント) | Render | **FPS** 低下, **Frame** 赤色 | 🔴 Frame ドロップ（赤いバー） | passive, throttle, rAF |
+| 12 | [総合ストレステスト](#12-総合ストレステスト) | 総合 | 全指標が悪化 | Main スレッド全体が埋まる | (分析用) |
+| 13 | [大量イベントリスナー](#13-大量イベントリスナー) | JS | **Event** 処理時間, **JS Heap** | 黄色 `Event` ハンドラ多数 | イベントデリゲーション |
+| 14 | [Debounce/Throttle](#14-debounce--throttle) | JS | **Event** 発火回数の比較 | `Event` の発火密度の違い | debounce, throttle |
+| 15 | [JSON.parse大量データ](#15-jsonparse-大量データ) | JS | **Task** > 50ms, **Scripting** 時間 | 🔴 Long Task, 黄色 `Parse JSON` | Web Worker, 分割処理 |
+| 16 | [正規表現の暴走](#16-正規表現の暴走-redos) | JS | **Task** 極端に長い, **Scripting** | 🔴🔴 極長の黄色バー（数秒〜） | 安全なパターン, 入力制限 |
+| 17 | [will-change乱用](#17-will-change-の乱用) | Layer | **GPU Memory** 増加 | Layers パネルでレイヤー数増加 | 必要な時だけ適用 |
+| 18 | [CLS](#18-cls-cumulative-layout-shift) | Render | **Layout Shift** イベント | 青い `Layout Shift` マーカー | サイズ指定, aspect-ratio |
+| 19 | [containプロパティ](#19-contain-プロパティ) | Render | **Paint** 範囲縮小 | 緑 `Paint` エリアが限定的に | contain: content |
+| 20 | [レンダーブロッキング](#20-22-リソース読み込み) | Load | **FCP**, **LCP** 遅延 | Network 行でブロッキング表示 | async/defer, preload |
+| 21 | [画像遅延読み込み](#20-22-リソース読み込み) | Load | **LCP**, Network タイミング | Network 行で画像リクエスト分散 | loading="lazy" |
+| 22 | [Web Font読み込み](#20-22-リソース読み込み) | Load | **FCP**, **FOUT/FOIT** | Network 行でフォント読み込み | font-display: swap |
+| 23 | [Canvas描画](#23-24-canvas-と描画) | Canvas | **Paint**, **GPU** 使用率 | 緑 `Paint` + GPU プロセス負荷 | オフスクリーンCanvas |
+| 24 | [大量パーティクル](#23-24-canvas-と描画) | Canvas | **FPS** 低下, **Frame** 時間 | 🔴 Frame ドロップ, FPS < 60 | オブジェクトプール |
+
+### Performance タブ指標の見方
+
+| 指標名 | 説明 | 確認場所 |
+|--------|------|----------|
+| **Task** | JavaScript タスクの実行時間（50ms超でLong Task） | Main セクション |
+| **Total Blocking Time (TBT)** | Long Task による累積ブロック時間 | Summary パネル |
+| **Layout** | レイアウト計算イベント | Main セクション（紫色） |
+| **Recalculate Style** | CSSスタイルの再計算 | Main セクション（紫色） |
+| **Paint** | ピクセル描画イベント | Main セクション（緑色） |
+| **Composite Layers** | レイヤー合成（GPU処理） | Main セクション（緑色） |
+| **Timer Fired** | setInterval/setTimeout コールバック | Main セクション（黄色） |
+| **Event** | イベントハンドラ実行 | Main セクション（黄色） |
+| **JS Heap Size** | JavaScript ヒープメモリ使用量 | Memory チェックボックス有効時 |
+| **FPS** | フレームレート（理想は60fps） | Frames セクション上部 |
+| **Frame** | 各フレームの描画時間（16.67ms超で赤） | Frames セクション |
+| **Layout Shift** | レイアウトシフト発生 | Experience セクション |
+| **FCP/LCP** | First/Largest Contentful Paint | Timings セクション |
+| **Forced reflow** | 強制同期レイアウトの警告 | ⚠️ 警告アイコン |
+
+### フレームチャートの色分け
+
+| 色 | 処理カテゴリ | 代表的なイベント |
+|----|-------------|-----------------|
+| 🟡 黄色 | **Scripting** | Task, Timer Fired, Event, Compile Script |
+| 🟣 紫色 | **Rendering** | Recalculate Style, Layout, Update Layer Tree |
+| 🟢 緑色 | **Painting** | Paint, Composite Layers |
+| ⚪ グレー | **System/Other** | System, Idle |
+| 🔴 赤色 | **問題の警告** | Long Task マーカー, Frame ドロップ |
+
+### カテゴリ凡例
+
+| カテゴリ | 説明 | DevTools タブ |
+|---------|------|--------------|
+| **JS** | JavaScript の実行に関する問題 | Performance (黄色) |
+| **CSS** | スタイル計算・描画に関する問題 | Performance (紫/緑) |
+| **Render** | レイアウト・再描画に関する問題 | Performance, Rendering |
+| **Layer** | レイヤー管理に関する問題 | Layers |
+| **Load** | リソース読み込みに関する問題 | Network, Performance |
+| **Canvas** | Canvas 描画に関する問題 | Performance (GPU) |
+
+---
+
 ## 使い方
 
 ```bash
