@@ -582,6 +582,758 @@ el.addEventListener('scroll', () => {
       </div>
     </section>
 
+    <!-- Additional JavaScript Issues -->
+    <section class="category">
+      <h2>JavaScript 追加問題</h2>
+
+      <div class="test-card">
+        <h3>13. 大量イベントリスナー</h3>
+        <p>1000個の要素に個別にイベントリスナーを追加。メモリ消費とイベント処理時間が増加します。</p>
+        <button onclick="addManyListeners()">実行: 1000個のリスナー追加</button>
+        <button onclick="addDelegatedListener()">比較: イベントデリゲーション</button>
+        <button onclick="clearListenerDemo()">クリア</button>
+        <div class="listener-container" id="listenerContainer"></div>
+        <div class="indicator" id="listenerIndicator"></div>
+
+        <details class="details-section">
+          <summary>原因と対策を見る</summary>
+          <div class="details-content">
+            <div class="cause">
+              <h4>原因</h4>
+              <ul>
+                <li>各リスナーがメモリを消費（関数オブジェクト + クロージャ）</li>
+                <li>イベント発火時、全リスナーをチェック</li>
+                <li>動的に追加された要素には個別対応が必要</li>
+                <li>リスナーの削除忘れでメモリリーク発生</li>
+              </ul>
+              <div class="code-example">
+                <strong>メモリ使用量の比較:</strong>
+                <pre><code>1000個の個別リスナー: ~1000個の関数オブジェクト
+イベントデリゲーション: 1個の関数オブジェクト</code></pre>
+              </div>
+            </div>
+            <div class="solution">
+              <h4>対策: イベントデリゲーション</h4>
+              <ul>
+                <li>親要素に1つのリスナーを設定</li>
+                <li><code>event.target</code> で発生元を判定</li>
+                <li>動的要素も自動的にカバー</li>
+                <li>メモリ使用量を大幅削減</li>
+              </ul>
+              <div class="code-example">
+                <strong>改善例:</strong>
+                <pre><code>// 悪い例: 個別リスナー
+items.forEach(item => {
+  item.addEventListener('click', handleClick);
+});
+
+// 良い例: イベントデリゲーション
+container.addEventListener('click', (e) => {
+  if (e.target.matches('.item')) {
+    handleClick(e);
+  }
+});</code></pre>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="test-card">
+        <h3>14. Debounce / Throttle 比較</h3>
+        <p>入力イベントの最適化効果を比較。下のテキストボックスに連続入力してください。</p>
+        <div class="input-demo">
+          <div class="input-group">
+            <label>通常（毎回実行）:</label>
+            <input type="text" id="inputNormal" placeholder="入力してください">
+            <span class="counter" id="counterNormal">0回</span>
+          </div>
+          <div class="input-group">
+            <label>Debounce（300ms後に1回）:</label>
+            <input type="text" id="inputDebounce" placeholder="入力してください">
+            <span class="counter" id="counterDebounce">0回</span>
+          </div>
+          <div class="input-group">
+            <label>Throttle（100ms間隔）:</label>
+            <input type="text" id="inputThrottle" placeholder="入力してください">
+            <span class="counter" id="counterThrottle">0回</span>
+          </div>
+        </div>
+        <button onclick="resetInputCounters()">カウンターリセット</button>
+
+        <details class="details-section">
+          <summary>原因と対策を見る</summary>
+          <div class="details-content">
+            <div class="cause">
+              <h4>Debounce と Throttle の違い</h4>
+              <table class="property-table">
+                <tr>
+                  <th>手法</th>
+                  <th>動作</th>
+                  <th>用途</th>
+                </tr>
+                <tr>
+                  <td><strong>Debounce</strong></td>
+                  <td>最後のイベントから一定時間後に1回実行</td>
+                  <td>検索入力、ウィンドウリサイズ</td>
+                </tr>
+                <tr>
+                  <td><strong>Throttle</strong></td>
+                  <td>一定間隔で最大1回実行</td>
+                  <td>スクロール、マウス移動</td>
+                </tr>
+              </table>
+              <div class="code-example">
+                <strong>タイムライン比較:</strong>
+                <pre><code>イベント:  |-|-|-|-|-|-----------|
+通常:      |x|x|x|x|x|           | (5回実行)
+Debounce:  |         |-------|x| | (1回実行、遅延後)
+Throttle:  |x|   |x|   |x|       | (3回実行、間隔制限)</code></pre>
+              </div>
+            </div>
+            <div class="solution">
+              <h4>実装例</h4>
+              <div class="code-example">
+                <pre><code>// Debounce
+function debounce(fn, delay) {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => fn(...args), delay);
+  };
+}
+
+// Throttle
+function throttle(fn, limit) {
+  let inThrottle;
+  return (...args) => {
+    if (!inThrottle) {
+      fn(...args);
+      inThrottle = true;
+      setTimeout(() => inThrottle = false, limit);
+    }
+  };
+}</code></pre>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="test-card">
+        <h3>15. JSON.parse 大量データ</h3>
+        <p>巨大なJSONデータのパース処理。メインスレッドをブロックします。</p>
+        <button onclick="parseHugeJSON()">実行: 10MB JSON パース</button>
+        <button onclick="parseJSONStreaming()">比較: ストリーミング風パース</button>
+        <div class="indicator" id="jsonIndicator"></div>
+
+        <details class="details-section">
+          <summary>原因と対策を見る</summary>
+          <div class="details-content">
+            <div class="cause">
+              <h4>原因</h4>
+              <ul>
+                <li><code>JSON.parse()</code> は同期処理でメインスレッドをブロック</li>
+                <li>大きなデータほど処理時間が長くなる</li>
+                <li>パース中はUIが完全にフリーズ</li>
+                <li>メモリを一度に確保するためGCも発生しやすい</li>
+              </ul>
+            </div>
+            <div class="solution">
+              <h4>対策</h4>
+              <ul>
+                <li><strong>Web Worker</strong>: 別スレッドでパース</li>
+                <li><strong>ストリーミング</strong>: データを分割して処理</li>
+                <li><strong>サーバー側で分割</strong>: ページネーションでデータを小分けに</li>
+                <li><strong>必要なデータのみ</strong>: GraphQL等で必要なフィールドのみ取得</li>
+              </ul>
+              <div class="code-example">
+                <strong>改善例:</strong>
+                <pre><code>// 悪い例: 同期パース
+const data = JSON.parse(hugeJsonString);
+
+// 良い例: Web Worker
+const worker = new Worker('json-worker.js');
+worker.postMessage(jsonString);
+worker.onmessage = (e) => {
+  const data = e.data;
+  updateUI(data);
+};</code></pre>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="test-card">
+        <h3>16. 正規表現の暴走 (ReDoS)</h3>
+        <p>悪意のある入力で正規表現が指数的に遅くなる問題。</p>
+        <button onclick="runSafeRegex()">実行: 安全な正規表現</button>
+        <button onclick="runDangerousRegex()">実行: 危険な正規表現 (注意!)</button>
+        <div class="indicator" id="regexIndicator"></div>
+
+        <details class="details-section">
+          <summary>原因と対策を見る</summary>
+          <div class="details-content">
+            <div class="cause">
+              <h4>原因: バックトラッキング</h4>
+              <ul>
+                <li>正規表現エンジンはマッチしない場合、別のパターンを試す（バックトラック）</li>
+                <li>ネストした量指定子 <code>(a+)+</code> は指数的な組み合わせを生む</li>
+                <li>悪意のある入力で意図的に遅延させることが可能（ReDoS攻撃）</li>
+              </ul>
+              <div class="code-example">
+                <strong>危険なパターン例:</strong>
+                <pre><code>/(a+)+$/       // ネストした量指定子
+/(a|a)+$/      // 重複する選択肢
+/(.*a){10}/    // 繰り返しの中の .* </code></pre>
+              </div>
+            </div>
+            <div class="solution">
+              <h4>対策</h4>
+              <ul>
+                <li><strong>アトミックグループ</strong>: バックトラックを防止</li>
+                <li><strong>所有量指定子</strong>: <code>++</code>, <code>*+</code> を使用</li>
+                <li><strong>入力の長さ制限</strong>: 処理前にバリデーション</li>
+                <li><strong>タイムアウト</strong>: 処理時間に上限を設定</li>
+                <li><strong>safe-regex ライブラリ</strong>: 危険なパターンを検出</li>
+              </ul>
+              <div class="code-example">
+                <strong>改善例:</strong>
+                <pre><code>// 悪い例
+/(a+)+$/.test(input)
+
+// 良い例: 具体的なパターン
+/a+$/.test(input)
+
+// 良い例: 入力長制限
+if (input.length > 1000) return false;
+/pattern/.test(input);</code></pre>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- Layer and Rendering Issues -->
+    <section class="category">
+      <h2>レイヤーとレンダリング</h2>
+
+      <div class="test-card">
+        <h3>17. will-change の乱用</h3>
+        <p>過剰なレイヤー生成によるメモリ消費。Layers タブで確認できます。</p>
+        <button onclick="addManyLayers()">実行: 500個のレイヤー生成</button>
+        <button onclick="clearLayers()">クリア</button>
+        <div class="layers-container" id="layersContainer"></div>
+        <div class="indicator" id="layersIndicator"></div>
+
+        <details class="details-section">
+          <summary>原因と対策を見る</summary>
+          <div class="details-content">
+            <div class="cause">
+              <h4>原因</h4>
+              <ul>
+                <li><code>will-change</code> は要素を独立したコンポジットレイヤーに昇格</li>
+                <li>各レイヤーはGPUメモリを消費（ビットマップとして保持）</li>
+                <li>過剰なレイヤーはメモリ不足やクラッシュの原因に</li>
+                <li>レイヤー間の合成処理も増加</li>
+              </ul>
+              <div class="code-example">
+                <strong>メモリ消費の目安:</strong>
+                <pre><code>1レイヤー (100x100px) ≈ 40KB (RGBA)
+500レイヤー = 約 20MB の GPUメモリ消費</code></pre>
+              </div>
+            </div>
+            <div class="solution">
+              <h4>対策</h4>
+              <ul>
+                <li><strong>必要な時だけ</strong>: アニメーション開始時に追加、終了時に削除</li>
+                <li><strong>最小限の要素</strong>: 本当に必要な要素にのみ適用</li>
+                <li><strong>Layers タブで確認</strong>: 生成されているレイヤー数をチェック</li>
+                <li><strong>contain: strict</strong>: 代替として検討</li>
+              </ul>
+              <div class="code-example">
+                <strong>改善例:</strong>
+                <pre><code>/* 悪い例: 常に適用 */
+.card { will-change: transform; }
+
+/* 良い例: 必要な時だけ */
+.card:hover { will-change: transform; }
+.card.animating { will-change: transform; }
+
+/* JS で動的に制御 */
+el.style.willChange = 'transform';
+el.addEventListener('transitionend', () => {
+  el.style.willChange = 'auto';
+});</code></pre>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="test-card">
+        <h3>18. CLS（レイアウトシフト）</h3>
+        <p>コンテンツ読み込み後にレイアウトがずれる問題。Core Web Vitals の重要指標です。</p>
+        <button onclick="demonstrateCLS()">実行: CLSを発生させる</button>
+        <button onclick="demonstrateCLSFixed()">比較: CLS対策済み</button>
+        <button onclick="resetCLSDemo()">リセット</button>
+        <div class="cls-container" id="clsContainer">
+          <div class="cls-text">このテキストの下に画像が読み込まれます。読み込み後にテキストがずれるか確認してください。</div>
+          <div class="cls-image-placeholder" id="clsPlaceholder"></div>
+          <div class="cls-text">このテキストは画像の下にあります。画像読み込みでずれる可能性があります。</div>
+        </div>
+
+        <details class="details-section">
+          <summary>原因と対策を見る</summary>
+          <div class="details-content">
+            <div class="cause">
+              <h4>原因</h4>
+              <ul>
+                <li>サイズ未指定の画像や広告が読み込み後にスペースを確保</li>
+                <li>動的に挿入されるコンテンツ（バナー、通知）</li>
+                <li>Webフォントの読み込みによるテキストサイズ変更</li>
+                <li>非同期で読み込まれる埋め込みコンテンツ</li>
+              </ul>
+              <div class="code-example">
+                <strong>CLS スコアの計算:</strong>
+                <pre><code>CLS = Σ (影響割合 × 距離割合)
+
+影響割合: ずれた要素が占める画面の割合
+距離割合: ずれた距離の画面に対する割合
+
+良好: < 0.1 | 改善が必要: 0.1-0.25 | 不良: > 0.25</code></pre>
+              </div>
+            </div>
+            <div class="solution">
+              <h4>対策</h4>
+              <ul>
+                <li><strong>画像にサイズ指定</strong>: <code>width</code>/<code>height</code> 属性を必ず設定</li>
+                <li><strong>aspect-ratio</strong>: CSSでアスペクト比を維持</li>
+                <li><strong>プレースホルダー</strong>: コンテンツ読み込み前にスペースを確保</li>
+                <li><strong>font-display: optional</strong>: フォント読み込み遅延時の影響を軽減</li>
+              </ul>
+              <div class="code-example">
+                <strong>改善例:</strong>
+                <pre><code>&lt;!-- 悪い例: サイズ未指定 --&gt;
+&lt;img src="image.jpg"&gt;
+
+&lt;!-- 良い例: サイズ指定 --&gt;
+&lt;img src="image.jpg" width="800" height="600"&gt;
+
+/* CSS でアスペクト比を維持 */
+.image-container {
+  aspect-ratio: 16 / 9;
+  background: #eee;
+}</code></pre>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="test-card">
+        <h3>19. contain プロパティ</h3>
+        <p>レンダリング範囲を限定して最適化。ペイント範囲の違いを確認できます。</p>
+        <button onclick="toggleContain()">トグル: contain 適用</button>
+        <button onclick="triggerContainUpdate()">内部要素を更新</button>
+        <div class="contain-demo">
+          <div class="contain-box" id="containBox">
+            <div class="contain-inner" id="containInner">
+              contain: none
+              <br>更新時に外部も再描画
+            </div>
+          </div>
+          <div class="contain-outside">この要素は containBox の外にあります</div>
+        </div>
+
+        <details class="details-section">
+          <summary>原因と対策を見る</summary>
+          <div class="details-content">
+            <div class="cause">
+              <h4>contain プロパティの効果</h4>
+              <table class="property-table">
+                <tr>
+                  <th>値</th>
+                  <th>効果</th>
+                </tr>
+                <tr>
+                  <td><code>layout</code></td>
+                  <td>内部のレイアウト変更が外部に影響しない</td>
+                </tr>
+                <tr>
+                  <td><code>paint</code></td>
+                  <td>内部の描画が要素の境界を超えない</td>
+                </tr>
+                <tr>
+                  <td><code>size</code></td>
+                  <td>要素のサイズが子要素に依存しない</td>
+                </tr>
+                <tr>
+                  <td><code>style</code></td>
+                  <td>カウンターやquotesが外部に影響しない</td>
+                </tr>
+                <tr>
+                  <td><code>strict</code></td>
+                  <td>size + layout + paint</td>
+                </tr>
+                <tr>
+                  <td><code>content</code></td>
+                  <td>layout + paint</td>
+                </tr>
+              </table>
+            </div>
+            <div class="solution">
+              <h4>使用例</h4>
+              <div class="code-example">
+                <pre><code>/* カード要素に適用 */
+.card {
+  contain: layout paint;
+}
+
+/* 仮想スクロールのアイテムに */
+.virtual-list-item {
+  contain: strict;
+  height: 50px; /* size を使う場合は固定サイズ必須 */
+}
+
+/* ウィジェットに */
+.widget {
+  contain: content;
+}</code></pre>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- Resource Loading Issues -->
+    <section class="category">
+      <h2>リソース読み込み</h2>
+
+      <div class="test-card">
+        <h3>20. レンダーブロッキング</h3>
+        <p>同期的なCSS/JSの読み込みによるレンダリング遅延。</p>
+        <button onclick="showBlockingDemo()">解説を表示</button>
+        <div class="blocking-demo" id="blockingDemo" style="display: none;">
+          <div class="blocking-timeline">
+            <div class="timeline-row">
+              <span class="timeline-label">ブロッキング:</span>
+              <div class="timeline-bar">
+                <span class="bar-segment html">HTML</span>
+                <span class="bar-segment css blocking">CSS (待機)</span>
+                <span class="bar-segment js blocking">JS (待機)</span>
+                <span class="bar-segment render">Render</span>
+              </div>
+            </div>
+            <div class="timeline-row">
+              <span class="timeline-label">非ブロッキング:</span>
+              <div class="timeline-bar">
+                <span class="bar-segment html">HTML</span>
+                <span class="bar-segment render">Render</span>
+                <span class="bar-segment css async">CSS</span>
+                <span class="bar-segment js async">JS</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <details class="details-section">
+          <summary>原因と対策を見る</summary>
+          <div class="details-content">
+            <div class="cause">
+              <h4>原因</h4>
+              <ul>
+                <li><code>&lt;link rel="stylesheet"&gt;</code> はデフォルトでレンダーブロッキング</li>
+                <li><code>&lt;script&gt;</code> はHTMLパースを停止して実行</li>
+                <li>外部リソースの読み込み完了まで描画が遅延</li>
+                <li>CSSOM構築完了までJSも待機する場合がある</li>
+              </ul>
+            </div>
+            <div class="solution">
+              <h4>対策</h4>
+              <div class="code-example">
+                <pre><code>&lt;!-- CSS: クリティカルCSSをインライン化 --&gt;
+&lt;style&gt;/* 初期表示に必要な最小限のCSS */&lt;/style&gt;
+&lt;link rel="preload" href="full.css" as="style"
+      onload="this.rel='stylesheet'"&gt;
+
+&lt;!-- JS: async または defer --&gt;
+&lt;script src="app.js" defer&gt;&lt;/script&gt;
+&lt;script src="analytics.js" async&gt;&lt;/script&gt;
+
+&lt;!-- リソースのプリロード --&gt;
+&lt;link rel="preload" href="font.woff2" as="font"
+      crossorigin&gt;
+&lt;link rel="preconnect" href="https://api.example.com"&gt;</code></pre>
+              </div>
+              <table class="property-table">
+                <tr>
+                  <th>属性</th>
+                  <th>動作</th>
+                </tr>
+                <tr>
+                  <td><code>async</code></td>
+                  <td>並列ダウンロード、即座に実行（順序不定）</td>
+                </tr>
+                <tr>
+                  <td><code>defer</code></td>
+                  <td>並列ダウンロード、DOMContentLoaded前に順序通り実行</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="test-card">
+        <h3>21. 画像の遅延読み込み</h3>
+        <p>Lazy Loading による初期読み込みの最適化。Network タブで確認できます。</p>
+        <button onclick="loadImagesEager()">実行: 即時読み込み (従来)</button>
+        <button onclick="loadImagesLazy()">実行: 遅延読み込み (Lazy)</button>
+        <button onclick="clearImageDemo()">クリア</button>
+        <div class="image-demo-container" id="imageDemoContainer"></div>
+        <div class="indicator" id="imageIndicator"></div>
+
+        <details class="details-section">
+          <summary>原因と対策を見る</summary>
+          <div class="details-content">
+            <div class="cause">
+              <h4>原因</h4>
+              <ul>
+                <li>ページ読み込み時に全画像をダウンロード</li>
+                <li>ビューポート外の画像も帯域を消費</li>
+                <li>初期表示が遅くなりLCPに悪影響</li>
+                <li>モバイルではデータ通信量の無駄</li>
+              </ul>
+            </div>
+            <div class="solution">
+              <h4>対策</h4>
+              <div class="code-example">
+                <pre><code>&lt;!-- ネイティブ Lazy Loading --&gt;
+&lt;img src="image.jpg" loading="lazy"
+     width="800" height="600"&gt;
+
+&lt;!-- 重要な画像は eager（デフォルト） --&gt;
+&lt;img src="hero.jpg" loading="eager"&gt;
+
+&lt;!-- Intersection Observer による実装 --&gt;
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const img = entry.target;
+      img.src = img.dataset.src;
+      observer.unobserve(img);
+    }
+  });
+});
+
+document.querySelectorAll('img[data-src]')
+  .forEach(img => observer.observe(img));</code></pre>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="test-card">
+        <h3>22. Web Font 読み込み</h3>
+        <p>フォント読み込みによるFOUT/FOITとレイアウトシフト。</p>
+        <button onclick="loadFontBlocking()">実行: ブロッキング読み込み</button>
+        <button onclick="loadFontOptimal()">実行: 最適化読み込み</button>
+        <button onclick="resetFontDemo()">リセット</button>
+        <div class="font-demo" id="fontDemo">
+          <p class="font-sample" id="fontSample">
+            ABCDEFGabcdefg 12345 あいうえお
+          </p>
+        </div>
+
+        <details class="details-section">
+          <summary>原因と対策を見る</summary>
+          <div class="details-content">
+            <div class="cause">
+              <h4>FOUT と FOIT</h4>
+              <ul>
+                <li><strong>FOIT (Flash of Invisible Text)</strong>: フォント読み込み中、テキストが非表示</li>
+                <li><strong>FOUT (Flash of Unstyled Text)</strong>: 代替フォントで表示後、切り替わる</li>
+                <li>フォント読み込み後にテキスト幅が変わりCLSが発生</li>
+              </ul>
+              <table class="property-table">
+                <tr>
+                  <th>font-display</th>
+                  <th>動作</th>
+                </tr>
+                <tr>
+                  <td><code>auto</code></td>
+                  <td>ブラウザ依存（多くはFOIT）</td>
+                </tr>
+                <tr>
+                  <td><code>block</code></td>
+                  <td>FOIT（3秒間非表示）</td>
+                </tr>
+                <tr>
+                  <td><code>swap</code></td>
+                  <td>FOUT（即座に代替表示）</td>
+                </tr>
+                <tr>
+                  <td><code>fallback</code></td>
+                  <td>100ms非表示、3秒でスワップ</td>
+                </tr>
+                <tr>
+                  <td><code>optional</code></td>
+                  <td>100ms非表示、キャッシュ時のみ使用</td>
+                </tr>
+              </table>
+            </div>
+            <div class="solution">
+              <h4>対策</h4>
+              <div class="code-example">
+                <pre><code>/* プリロードとfont-display */
+&lt;link rel="preload" href="font.woff2"
+      as="font" type="font/woff2" crossorigin&gt;
+
+@font-face {
+  font-family: 'MyFont';
+  src: url('font.woff2') format('woff2');
+  font-display: swap; /* または optional */
+}
+
+/* サイズ調整でCLSを軽減 */
+@font-face {
+  font-family: 'MyFont';
+  src: url('font.woff2');
+  size-adjust: 105%;
+  ascent-override: 90%;
+}</code></pre>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- Canvas and Graphics -->
+    <section class="category">
+      <h2>Canvas と描画</h2>
+
+      <div class="test-card">
+        <h3>23. Canvas 描画</h3>
+        <p>Canvasへの毎フレーム再描画。描画方法による負荷の違いを確認できます。</p>
+        <button onclick="startCanvasBad()">実行: 非効率な描画</button>
+        <button onclick="startCanvasGood()">比較: 効率的な描画</button>
+        <button onclick="stopCanvas()">停止</button>
+        <div class="canvas-container">
+          <canvas id="perfCanvas" width="400" height="200"></canvas>
+        </div>
+        <div class="indicator" id="canvasIndicator">FPS: --</div>
+
+        <details class="details-section">
+          <summary>原因と対策を見る</summary>
+          <div class="details-content">
+            <div class="cause">
+              <h4>原因</h4>
+              <ul>
+                <li>毎フレームで全体をクリア→再描画</li>
+                <li>複雑な図形の描画は CPU を消費</li>
+                <li>高解像度ディスプレイでピクセル数が増加</li>
+                <li>同期的な描画処理でメインスレッドをブロック</li>
+              </ul>
+            </div>
+            <div class="solution">
+              <h4>対策</h4>
+              <ul>
+                <li><strong>ダーティレクト</strong>: 変更された領域のみ再描画</li>
+                <li><strong>オフスクリーンCanvas</strong>: 静的部分を事前に描画してキャッシュ</li>
+                <li><strong>レイヤー分離</strong>: 動的/静的要素を別Canvasに</li>
+                <li><strong>WebGL</strong>: GPU アクセラレーションを活用</li>
+                <li><strong>OffscreenCanvas</strong>: Web Worker で描画</li>
+              </ul>
+              <div class="code-example">
+                <pre><code>// オフスクリーンCanvas でキャッシュ
+const offscreen = document.createElement('canvas');
+const offCtx = offscreen.getContext('2d');
+// 静的な背景を一度だけ描画
+drawBackground(offCtx);
+
+function render() {
+  // キャッシュを転送（高速）
+  ctx.drawImage(offscreen, 0, 0);
+  // 動的な部分のみ描画
+  drawMovingObjects(ctx);
+  requestAnimationFrame(render);
+}</code></pre>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="test-card">
+        <h3>24. 大量パーティクル</h3>
+        <p>パーティクルシステムによるアニメーション負荷。FPSの低下を確認できます。</p>
+        <button onclick="startParticles(100)">実行: 100個</button>
+        <button onclick="startParticles(500)">実行: 500個</button>
+        <button onclick="startParticles(2000)">実行: 2000個 (重い)</button>
+        <button onclick="stopParticles()">停止</button>
+        <div class="canvas-container">
+          <canvas id="particleCanvas" width="400" height="200"></canvas>
+        </div>
+        <div class="indicator" id="particleIndicator">パーティクル: 0 | FPS: --</div>
+
+        <details class="details-section">
+          <summary>原因と対策を見る</summary>
+          <div class="details-content">
+            <div class="cause">
+              <h4>原因</h4>
+              <ul>
+                <li>各パーティクルの位置・速度・色を毎フレーム計算</li>
+                <li>描画コールの回数が増加</li>
+                <li>オブジェクト生成/破棄によるGC発生</li>
+                <li>物理演算（衝突判定など）の計算コスト</li>
+              </ul>
+            </div>
+            <div class="solution">
+              <h4>対策</h4>
+              <ul>
+                <li><strong>オブジェクトプール</strong>: パーティクルを再利用</li>
+                <li><strong>空間分割</strong>: 衝突判定の計算量を削減</li>
+                <li><strong>LOD</strong>: 遠い/小さいパーティクルを省略</li>
+                <li><strong>GPU パーティクル</strong>: WebGL/シェーダーで並列処理</li>
+                <li><strong>バッチ描画</strong>: 同じ種類をまとめて描画</li>
+              </ul>
+              <div class="code-example">
+                <strong>オブジェクトプール:</strong>
+                <pre><code>class ParticlePool {
+  constructor(size) {
+    this.pool = Array(size).fill(null)
+      .map(() => new Particle());
+    this.active = [];
+  }
+
+  spawn() {
+    const p = this.pool.pop() || new Particle();
+    p.reset();
+    this.active.push(p);
+    return p;
+  }
+
+  recycle(particle) {
+    const idx = this.active.indexOf(particle);
+    if (idx > -1) {
+      this.active.splice(idx, 1);
+      this.pool.push(particle);
+    }
+  }
+}</code></pre>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+
     <!-- Combined Stress Test -->
     <section class="category">
       <h2>総合ストレステスト</h2>

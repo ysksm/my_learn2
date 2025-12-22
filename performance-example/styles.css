@@ -647,3 +647,300 @@ button:active {
 .property-list li {
   break-inside: avoid;
 }
+
+/* =============================================================================
+   New Components (13-24)
+   ============================================================================= */
+
+/* 13. Event Listeners Demo */
+.listener-container {
+  margin-top: 15px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  max-height: 150px;
+  overflow: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.listener-item {
+  width: 30px;
+  height: 30px;
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.listener-item:hover {
+  transform: scale(1.1);
+  background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+}
+
+/* 14. Debounce/Throttle Demo */
+.input-demo {
+  margin: 15px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.input-group label {
+  min-width: 200px;
+  font-size: 0.85rem;
+  color: #a0a0a0;
+}
+
+.input-group input {
+  flex: 1;
+  min-width: 150px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: #e0e0e0;
+  font-size: 0.9rem;
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: #7c3aed;
+}
+
+.counter {
+  min-width: 60px;
+  padding: 4px 10px;
+  background: rgba(124, 58, 237, 0.3);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: #a78bfa;
+  text-align: center;
+}
+
+/* 17. Layers Demo */
+.layers-container {
+  margin-top: 15px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  max-height: 150px;
+  overflow: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.layer-item {
+  width: 25px;
+  height: 25px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  color: white;
+}
+
+/* 18. CLS Demo */
+.cls-container {
+  margin-top: 15px;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+
+.cls-text {
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+  color: #a0a0a0;
+}
+
+.cls-image-placeholder {
+  border-radius: 8px;
+  margin-bottom: 10px;
+  transition: all 0.3s;
+}
+
+/* 19. Contain Demo */
+.contain-demo {
+  margin-top: 15px;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+
+.contain-box {
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.contain-inner {
+  padding: 20px;
+  background: rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  text-align: center;
+  font-size: 0.9rem;
+  transition: all 0.3s;
+}
+
+.contain-outside {
+  padding: 10px;
+  background: rgba(59, 130, 246, 0.2);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #93c5fd;
+}
+
+/* 20. Blocking Timeline Demo */
+.blocking-demo {
+  margin-top: 15px;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+}
+
+.blocking-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.timeline-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.timeline-label {
+  min-width: 120px;
+  font-size: 0.85rem;
+  color: #a0a0a0;
+}
+
+.timeline-bar {
+  flex: 1;
+  display: flex;
+  height: 30px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bar-segment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.bar-segment.html {
+  background: #3b82f6;
+  flex: 1;
+}
+
+.bar-segment.css {
+  background: #8b5cf6;
+  flex: 1;
+}
+
+.bar-segment.js {
+  background: #f59e0b;
+  flex: 1;
+}
+
+.bar-segment.render {
+  background: #22c55e;
+  flex: 1;
+}
+
+.bar-segment.blocking {
+  opacity: 0.6;
+  border: 2px dashed #ef4444;
+}
+
+.bar-segment.async {
+  opacity: 0.8;
+}
+
+/* 21. Image Demo */
+.image-demo-container {
+  margin-top: 15px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  max-height: 200px;
+  overflow: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 10px;
+}
+
+.demo-image {
+  height: 60px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: white;
+  font-weight: bold;
+  transition: all 0.3s;
+}
+
+.demo-image.lazy {
+  background: #333 !important;
+  color: #666;
+}
+
+/* 22. Font Demo */
+.font-demo {
+  margin-top: 15px;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+
+.font-sample {
+  font-size: 1.5rem;
+  text-align: center;
+  color: #e0e0e0;
+  transition: all 0.3s;
+}
+
+/* 23 & 24. Canvas Demo */
+.canvas-container {
+  margin-top: 15px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+}
+
+canvas {
+  display: block;
+  background: #1a1a2e;
+}

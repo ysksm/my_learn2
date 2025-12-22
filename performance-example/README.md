@@ -440,6 +440,249 @@ const observer = new IntersectionObserver(entries => {
 
 ---
 
+### 13. 大量イベントリスナー
+
+#### メカニズム
+- 各リスナーは関数オブジェクトとしてメモリを消費
+- クロージャがある場合、外部スコープの変数も保持
+- イベント発火時、該当要素のリスナーをすべてチェック
+
+```
+┌─────────────────────────────────────────────────┐
+│ 1000個の個別リスナー                            │
+├─────────────────────────────────────────────────┤
+│ element1.addEventListener(fn1)                  │
+│ element2.addEventListener(fn2)                  │
+│ element3.addEventListener(fn3)                  │
+│ ...                                             │
+│ → 1000個の関数オブジェクト                      │
+│ → メモリ消費大                                  │
+│ → 動的要素には対応できない                      │
+└─────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────┐
+│ イベントデリゲーション                          │
+├─────────────────────────────────────────────────┤
+│ parent.addEventListener(fn)                     │
+│   └─ event.target で判定                        │
+│ → 1個の関数オブジェクト                         │
+│ → 動的要素も自動対応                            │
+└─────────────────────────────────────────────────┘
+```
+
+#### 対策
+```javascript
+// イベントデリゲーション
+container.addEventListener('click', (e) => {
+  if (e.target.matches('.item')) handleClick(e);
+});
+```
+
+---
+
+### 14. Debounce / Throttle
+
+#### メカニズム
+高頻度イベント（input, scroll, resize）の処理を最適化
+
+```
+イベント発火:  |●|●|●|●|●|---------|●|●|●|
+通常:          |x|x|x|x|x|         |x|x|x|  (9回実行)
+Debounce:      |         |-------|x|     |x|  (2回: 停止後に実行)
+Throttle:      |x|   |x|   |x|   |x|   |x|   (5回: 間隔制限)
+```
+
+| 手法 | 動作 | 用途 |
+|------|------|------|
+| **Debounce** | 最後のイベントから一定時間後に1回 | 検索入力、リサイズ完了後 |
+| **Throttle** | 一定間隔で最大1回 | スクロール、マウス移動 |
+
+---
+
+### 15. JSON.parse 大量データ
+
+#### メカニズム
+- `JSON.parse()` は同期処理
+- 大きなデータほどメインスレッドを長時間ブロック
+- パース中はGCも発生しやすい
+
+#### 対策
+| 方法 | 説明 |
+|------|------|
+| **Web Worker** | 別スレッドでパース |
+| **ストリーミング** | データを分割して処理 |
+| **ページネーション** | サーバー側で分割 |
+
+---
+
+### 16. 正規表現の暴走 (ReDoS)
+
+#### メカニズム
+- 正規表現エンジンはマッチ失敗時にバックトラック
+- ネストした量指定子 `(a+)+` は指数的な組み合わせを生成
+- 悪意のある入力で意図的に遅延可能（ReDoS攻撃）
+
+```
+パターン: (a+)+$
+入力: "aaaaaaaaaaaaaaaaaaaaaaaab"
+
+試行:
+1. a×25 としてマッチ試行 → 失敗
+2. a×24 + a×1 として試行 → 失敗
+3. a×23 + a×2 として試行 → 失敗
+... (2^25 通りの組み合わせ)
+```
+
+#### 危険なパターン
+```javascript
+/(a+)+$/      // ネストした量指定子
+/(a|a)+$/     // 重複する選択肢
+/(.*a){10}/   // 繰り返しの中の .*
+```
+
+---
+
+### 17. will-change の乱用
+
+#### メカニズム
+- `will-change` は要素を独立したコンポジットレイヤーに昇格
+- 各レイヤーはGPUメモリを消費（ビットマップとして保持）
+- 100x100pxの要素 ≈ 40KB (RGBA)
+
+```
+┌─────────────────────────────────────────────────┐
+│ 過剰なレイヤー生成                              │
+├─────────────────────────────────────────────────┤
+│ .card { will-change: transform; } × 500個      │
+│ → 500個の独立レイヤー                          │
+│ → 約 20MB の GPU メモリ消費                     │
+│ → モバイルではクラッシュの可能性                │
+└─────────────────────────────────────────────────┘
+```
+
+#### 対策
+```css
+/* 必要な時だけ適用 */
+.card:hover { will-change: transform; }
+.card.animating { will-change: transform; }
+```
+
+---
+
+### 18. CLS (Cumulative Layout Shift)
+
+#### メカニズム
+Core Web Vitals の重要指標。コンテンツの予期しない移動を測定。
+
+```
+CLS = Σ (影響割合 × 距離割合)
+
+良好: < 0.1 | 改善が必要: 0.1-0.25 | 不良: > 0.25
+```
+
+#### 原因
+- サイズ未指定の画像
+- 動的に挿入されるコンテンツ
+- Webフォントの読み込み
+
+#### 対策
+```html
+<!-- サイズを明示 -->
+<img src="..." width="800" height="600">
+
+<!-- アスペクト比を維持 -->
+<style>
+.image { aspect-ratio: 16 / 9; }
+</style>
+```
+
+---
+
+### 19. contain プロパティ
+
+#### メカニズム
+レンダリング範囲を限定してブラウザの最適化を支援
+
+| 値 | 効果 |
+|----|------|
+| `layout` | 内部のレイアウト変更が外部に影響しない |
+| `paint` | 内部の描画が境界を超えない |
+| `size` | 要素サイズが子に依存しない |
+| `strict` | size + layout + paint |
+| `content` | layout + paint |
+
+```css
+.widget { contain: content; }
+.virtual-item { contain: strict; height: 50px; }
+```
+
+---
+
+### 20-22. リソース読み込み
+
+#### レンダーブロッキング
+```html
+<!-- async: 並列DL、即座に実行 -->
+<script src="analytics.js" async></script>
+
+<!-- defer: 並列DL、DOM解析後に順序通り実行 -->
+<script src="app.js" defer></script>
+
+<!-- クリティカルCSSをインライン化 -->
+<style>/* 初期表示に必要な最小限 */</style>
+```
+
+#### 画像の遅延読み込み
+```html
+<img src="..." loading="lazy">
+```
+
+#### Webフォント
+```css
+@font-face {
+  font-family: 'MyFont';
+  src: url('font.woff2');
+  font-display: swap; /* FOUT: 代替フォントを先に表示 */
+}
+```
+
+---
+
+### 23-24. Canvas と描画
+
+#### 非効率な描画
+```javascript
+// 毎フレーム全体を再描画（悪い例）
+function render() {
+  ctx.clearRect(0, 0, w, h);
+  drawBackground();  // 毎回描画
+  drawObjects();
+  requestAnimationFrame(render);
+}
+```
+
+#### 効率的な描画
+```javascript
+// オフスクリーンCanvasでキャッシュ
+const offscreen = document.createElement('canvas');
+const offCtx = offscreen.getContext('2d');
+drawBackground(offCtx);  // 一度だけ
+
+function render() {
+  ctx.drawImage(offscreen, 0, 0);  // 転送のみ
+  drawMovingObjects(ctx);
+  requestAnimationFrame(render);
+}
+```
+
+#### パーティクル最適化
+- **オブジェクトプール**: 生成/破棄を避けて再利用
+- **バッチ描画**: 同じ種類をまとめて描画
+- **LOD**: 遠い/小さいものを省略
+- **GPU**: WebGL/シェーダーで並列処理
+
+---
+
 ## Chrome DevTools の使い方
 
 ### Performance タブ

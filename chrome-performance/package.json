@@ -1,0 +1,16 @@
+{
+  "name": "chrome-performance",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "bun run index.ts",
+    "chrome": "open -a 'Google Chrome' --args --remote-debugging-port=9222"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
