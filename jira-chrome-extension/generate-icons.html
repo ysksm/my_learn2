@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Icon Generator</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .icons { display: flex; gap: 20px; flex-wrap: wrap; }
+    .icon-container { text-align: center; }
+    canvas { border: 1px solid #ccc; }
+    button { margin-top: 10px; padding: 8px 16px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Jira Extension Icons Generator</h1>
+  <p>下のボタンをクリックしてアイコンをダウンロードし、iconsフォルダに保存してください。</p>
+
+  <div class="icons">
+    <div class="icon-container">
+      <canvas id="icon16" width="16" height="16"></canvas>
+      <br><button onclick="download('icon16', 16)">icon16.png</button>
+    </div>
+    <div class="icon-container">
+      <canvas id="icon48" width="48" height="48"></canvas>
+      <br><button onclick="download('icon48', 48)">icon48.png</button>
+    </div>
+    <div class="icon-container">
+      <canvas id="icon128" width="128" height="128"></canvas>
+      <br><button onclick="download('icon128', 128)">icon128.png</button>
+    </div>
+  </div>
+
+  <script>
+    function drawIcon(canvasId, size) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext('2d');
+
+      // 背景（Jiraブルー）
+      ctx.fillStyle = '#0052CC';
+      ctx.beginPath();
+      ctx.roundRect(0, 0, size, size, size * 0.15);
+      ctx.fill();
+
+      // J文字
+      ctx.fillStyle = 'white';
+      ctx.font = `bold ${size * 0.6}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('J', size / 2, size / 2 + size * 0.05);
+    }
+
+    function download(canvasId, size) {
+      const canvas = document.getElementById(canvasId);
+      const link = document.createElement('a');
+      link.download = `icon${size}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    // アイコンを描画
+    drawIcon('icon16', 16);
+    drawIcon('icon48', 48);
+    drawIcon('icon128', 128);
+  </script>
+</body>
+</html>
