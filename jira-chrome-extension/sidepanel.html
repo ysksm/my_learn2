@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jira Project Viewer</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Jira Project Viewer</h1>
+    </header>
+
+    <section class="base-url-section">
+      <label for="baseUrl">Base URL:</label>
+      <input type="text" id="baseUrl" placeholder="https://your-domain.atlassian.net" readonly>
+      <button id="refreshUrl" class="btn btn-secondary" title="現在のページからURLを取得">
+        🔄 更新
+      </button>
+    </section>
+
+    <section class="actions">
+      <button id="fetchProjects" class="btn btn-primary">
+        📋 プロジェクト一覧を取得
+      </button>
+    </section>
+
+    <section class="status-section">
+      <div id="status" class="status"></div>
+    </section>
+
+    <section class="projects-section">
+      <h2>プロジェクト一覧</h2>
+      <div id="projectList" class="project-list">
+        <p class="placeholder">ボタンを押してプロジェクトを取得してください</p>
+      </div>
+    </section>
+  </div>
+
+  <script src="sidepanel.js"></script>
+</body>
+</html>
