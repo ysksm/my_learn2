@@ -1,0 +1,114 @@
+.code-block {
+  background: #1e1e2e;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.code-block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.code-block-title {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+}
+
+.code-block-language {
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  background: var(--color-bg-tertiary);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.code-block-content {
+  padding: var(--spacing-md);
+  margin: 0;
+  overflow-x: auto;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+}
+
+.code-block-content code {
+  display: block;
+}
+
+.code-line {
+  display: flex;
+  padding: 1px 0;
+}
+
+.code-line.highlighted {
+  background: rgba(99, 102, 241, 0.15);
+  margin: 0 calc(-1 * var(--spacing-md));
+  padding: 1px var(--spacing-md);
+}
+
+.line-number {
+  width: 3ch;
+  text-align: right;
+  color: var(--color-text-muted);
+  margin-right: var(--spacing-md);
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.line-content {
+  white-space: pre;
+}
+
+/* Code comparison */
+.code-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+}
+
+@media (max-width: 1024px) {
+  .code-comparison {
+    grid-template-columns: 1fr;
+  }
+}
+
+.code-comparison-panel {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.code-comparison-panel.before {
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.code-comparison-panel.after {
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.code-comparison-badge {
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.code-comparison-panel.before .code-comparison-badge {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--color-danger);
+}
+
+.code-comparison-panel.after .code-comparison-badge {
+  background: rgba(34, 197, 94, 0.1);
+  color: var(--color-success);
+}
+
+.code-comparison-panel .code-block {
+  border: none;
+  border-radius: 0;
+}

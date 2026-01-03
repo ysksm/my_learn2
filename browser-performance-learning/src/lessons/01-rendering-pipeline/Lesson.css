@@ -1,0 +1,149 @@
+.lesson {
+  max-width: 1000px;
+}
+
+.lesson-header {
+  margin-bottom: var(--spacing-xl);
+}
+
+.lesson-header h1 {
+  font-size: 1.75rem;
+  margin-bottom: var(--spacing-sm);
+}
+
+.lesson-header p {
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+}
+
+/* Section styling */
+.concept-section,
+.exercises-section,
+.devtools-section,
+.takeaways-section {
+  margin-bottom: var(--spacing-xl);
+}
+
+.concept-section h2,
+.exercises-section h2,
+.devtools-section h2,
+.takeaways-section h2 {
+  font-size: 1.25rem;
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Pipeline diagram */
+.pipeline-diagram {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-lg);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.pipeline-stage {
+  text-align: center;
+  padding: var(--spacing-md);
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-md);
+  min-width: 100px;
+}
+
+.stage-icon {
+  font-size: 1.5rem;
+  margin-bottom: var(--spacing-xs);
+}
+
+.stage-name {
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-bottom: var(--spacing-xs);
+}
+
+.stage-desc {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.pipeline-arrow {
+  color: var(--color-text-muted);
+  font-size: 1.25rem;
+}
+
+/* Frame budget explanation */
+.frame-budget-explanation {
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+}
+
+.frame-budget-explanation h3 {
+  font-size: 1rem;
+  margin-bottom: var(--spacing-md);
+}
+
+.frame-budget-explanation p {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-lg);
+}
+
+.frame-budget-explanation strong {
+  color: var(--color-primary);
+}
+
+.budget-breakdown-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.budget-item {
+  display: grid;
+  grid-template-columns: 100px 60px 1fr;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm);
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+}
+
+.budget-phase {
+  font-weight: 600;
+}
+
+.budget-time {
+  font-family: 'SF Mono', monospace;
+  color: var(--color-primary);
+}
+
+.budget-note {
+  color: var(--color-text-muted);
+}
+
+/* Takeaways */
+.takeaways-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.takeaways-list li {
+  padding: var(--spacing-md);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--color-primary);
+}
+
+.takeaways-list strong {
+  color: var(--color-text);
+  display: block;
+  margin-bottom: var(--spacing-xs);
+}
